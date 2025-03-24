@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>麵包訂購表格</title>
+    <title>揉Pain訂購表單</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 固定總金額的位置 */
@@ -22,7 +22,19 @@
 </head>
 <body class="bg-gray-100 p-6">
     <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h2 class="text-2xl font-bold mb-4 text-gray-700">麵包訂購</h2>
+        <h2 class="text-2xl font-bold mb-4 text-gray-700">揉Pain訂購表單</h2>
+        
+        
+        <!-- 新增 LINE 顯示名稱與聯絡電話輸入框 -->
+        <div class="mb-4">
+            <label class="block text-gray-700">LINE顯示名稱：</label>
+            <input type="text" id="line-name" class="w-full border rounded p-2" placeholder="請輸入您的LINE顯示名稱">
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-700">聯絡電話：</label>
+            <input type="tel" id="contact-phone" class="w-full border rounded p-2" placeholder="請輸入您的聯絡電話">
+        </div>
+
         <table class="min-w-full border-collapse border border-gray-300 text-gray-700">
             <thead>
                 <tr class="bg-gray-200">
@@ -598,10 +610,16 @@
     
         function submitOrder() {
             let orderData = calculateAmount();
-            let gasUrl = "https://script.google.com/macros/s/AKfycbylldopHOlOHKHzu2pByRQmx8h3quuJFxiFHUd7s9ROe6P7M9qh7YgOJ4R9gg6PFwNT/exec"; // 請填入你的 Google Apps Script Web App URL
+            let lineName = document.getElementById("line-name").value.trim();
+            let contactPhone = document.getElementById("contact-phone").value.trim();
+            let gasUrl = "https://script.google.com/macros/s/AKfycbxGrbp40999J0nBrH1YOyax1Tg_Jx1AKjC-L0QDpkPjxB2-LVb2EQQ3YxXOg8jFGXsq/exec"; // 替換為你的 GAS 網址
     
-            // 將訂單內容轉換為 URL 參數格式
-            let queryString = `?total=${orderData.total}&orders=${encodeURIComponent(orderData.orders.join("\n"))}`;
+            if (!lineName || !contactPhone) {
+                alert("請填寫LINE顯示名稱與聯絡電話！");
+                return;
+            }
+    
+            let queryString = `?lineName=${encodeURIComponent(lineName)}&contactPhone=${encodeURIComponent(contactPhone)}&total=${orderData.total}&orders=${encodeURIComponent(orderData.orders.join("\n"))}`;
     
             fetch(gasUrl + queryString, {
                 method: "GET"
@@ -615,6 +633,5 @@
             });
         }
     </script>  
-
 </body>
 </html>
