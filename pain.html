@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麵包訂購表格</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 固定總金額的位置 */
+        #total-price {
+            position: fixed;
+            bottom: 90px; /* 調整位置以使其在送出按鈕上方 */
+            right: 24px;
+            background-color: rgba(255, 255, 255, 0.9); /* 增加背景色讓文字不會因為捲動而被遮擋 */
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 10; /* 保證顯示在最上層 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
+        <h2 class="text-2xl font-bold mb-4 text-gray-700">麵包訂購</h2>
+        <table class="min-w-full border-collapse border border-gray-300 text-gray-700">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-1 border">菓子類(甜麵包)</th>
+                    <th class="p-1 border w-24">數量</th>
+                    <th class="p-1 border">價格</th>
+                    <th class="p-1 border w-24">金額</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">肉桂捲</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="50" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">50</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">奶酥幽浮</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="48" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">48</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">芋泥好麻吉</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="45" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">45</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">紅豆菓子</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="45" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">45</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">香草卡士達</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="45" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">45</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">日式菠蘿</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="40" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">40</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">經典菠蘿</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="40" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">40</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">鹽之花奶油紅豆維也納(需冷藏)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="68" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">68</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="bg-gray-200">
+                    <th class="p-1 border">鹹麵包</th>
+                    <th class="p-1 border w-24">數量</th>
+                    <th class="p-1 border">價格</th>
+                    <th class="p-1 border w-24">金額</th>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">海鹽捲</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="40" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">40</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">青蔥麵包</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="42" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">42</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">摩佐瑞拉香腸</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="68" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">68</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">田園鮪魚(需冷藏)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="45" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">45</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">妞妞的鬆鬆麵包(需冷藏)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="50" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">50</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">蒙太古芋泥肉鬆三明治(需冷藏)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="55" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">55</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">起司蛋燒(需冷藏)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="65" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">65</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">羊角新月-海鹽(四五六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="68" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">68</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="bg-gray-200">
+                    <th class="p-1 border">吐司類&餐包類</th>
+                    <th class="p-1 border w-24">數量</th>
+                    <th class="p-1 border">價格</th>
+                    <th class="p-1 border w-24">金額</th>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">蘭姆葡萄吐司</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="110" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">110</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">熟成乳酪吐司</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="165" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">165</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">杏芋Lucky吐司(需冷藏)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="160" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">160</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">牧場牛奶吐司</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="138" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">138</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">石磨全麥吐司(五六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="128" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">128</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">葡萄小餐包</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="60" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">60</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">日安早安餐包(六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="95" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">95</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="bg-gray-200">
+                    <th class="p-1 border">多拿滋</th>
+                    <th class="p-1 border w-24">數量</th>
+                    <th class="p-1 border">價格</th>
+                    <th class="p-1 border w-24">金額</th>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">奶糖多拿滋</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="37" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">37</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">日式濃厚咖哩多拿滋</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="65" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">65</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">花生芝麻小福球</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="17" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">17</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">栗栗多拿滋(需冷藏)(六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="65" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">65</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">雷夢小姐(一三五六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="55" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">55</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">覆盆莓多拿滋(需冷藏)(二四六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="60" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">60</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">鮪魚多拿滋(需冷藏)(六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="65" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">65</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="bg-gray-200">
+                    <th class="p-1 border">可頌類</th>
+                    <th class="p-1 border w-24">數量</th>
+                    <th class="p-1 border">價格</th>
+                    <th class="p-1 border w-24">金額</th>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">經典可頌</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="60" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">60</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">火山豆黑黑可頌</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="68" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">68</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">培根乳酪可頌</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="70" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">70</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">起司火腿可頌</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="70" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">70</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">香腸芥末籽可頌</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="70" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">70</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">蜜香紅茶馬卡龍可頌</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="85" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">85</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">檸檬香頌(需冷藏)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="75" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">75</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">克林阿曼(五六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="70" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">70</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">杏仁可頌</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="78" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">78</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="bg-gray-200">
+                    <th class="p-1 border">歐式麵包</th>
+                    <th class="p-1 border w-24">數量</th>
+                    <th class="p-1 border">價格</th>
+                    <th class="p-1 border w-24">金額</th>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">黃金亞麻籽蔓越莓</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="48" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">48</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">藍苺乳酪</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="49" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">49</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">低溫發酵全麥核桃(一三五)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="100" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">100</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">鄉村水果(二日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="185" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">185</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">黑糖桂圓(四五日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="155" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">155</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">焙烤黃豆粉核桃(四六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="180" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">180</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">特濃黑芝麻(四六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="180" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">180</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">雙重乳酪麵包(四五六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="90" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">90</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">栗香地瓜(三五六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="165" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">165</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="bg-gray-200">
+                    <th class="p-1 border">法國類</th>
+                    <th class="p-1 border w-24">數量</th>
+                    <th class="p-1 border">價格</th>
+                    <th class="p-1 border w-24">金額</th>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">大蒜法國</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="62" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">62</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">明太子法國</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="75" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">75</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">經典長棍</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="70" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">70</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">培根蘆筍法國</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="75" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">75</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">北海道煉乳法國(一二四六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="50" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">50</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="bg-gray-200">
+                    <th class="p-1 border">甜點類</th>
+                    <th class="p-1 border w-24">數量</th>
+                    <th class="p-1 border">價格</th>
+                    <th class="p-1 border w-24">金額</th>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">可麗露</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="70" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">70</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">栗子派3顆(六日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="70" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">70</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">蔓越莓乳酪司康(一二四日)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="45" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">45</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">葡萄司康(三六)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="45" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">45</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">巧克力司康(二五)</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="48" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">48</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">檸檬瑪德蓮</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="42" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">42</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">東方美人費南雪</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="55" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">55</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">雪球餅乾</td>
+                    <td class="p-1 border w-24">
+                        <input type="number" class="quantity w-full text-center border rounded p-1" data-price="95" value="0" min="0" oninput="calculateAmount()">
+                    </td>
+                    <td class="p-1 border">95</td>
+                    <td class="p-1 border w-24 amount">0</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="text-right mt-4 text-xl font-semibold text-gray-700" id="total-price">總金額: $0</div>
+    </div>
+    
+    <button onclick="submitOrder()" class="fixed bottom-6 right-6 px-6 py-3 bg-blue-500 text-white rounded-full shadow-lg">送出</button>
+    
+    <script>
+        function calculateAmount() {
+            let rows = document.querySelectorAll("tbody tr");
+            let total = 0;
+            let orders = [];
+    
+            rows.forEach(row => {
+                let quantityInput = row.querySelector(".quantity");
+                if (quantityInput) {
+                    let quantity = parseInt(quantityInput.value, 10);
+                    let price = parseInt(quantityInput.getAttribute("data-price"), 10);
+                    let amount = quantity * price;
+    
+                    row.querySelector(".amount").innerText = amount;
+                    total += amount;
+    
+                    if (quantity > 0) {
+                        orders.push(`${row.cells[0].innerText} x ${quantity} (${amount}元)`);
+                    }
+                }
+            });
+    
+            document.getElementById("total-price").innerText = `總金額: $${total}`;
+            return { orders, total };
+        }
+    
+        function submitOrder() {
+            let orderData = calculateAmount();
+            let gasUrl = "https://script.google.com/macros/s/AKfycbylldopHOlOHKHzu2pByRQmx8h3quuJFxiFHUd7s9ROe6P7M9qh7YgOJ4R9gg6PFwNT/exec"; // 請填入你的 Google Apps Script Web App URL
+    
+            // 將訂單內容轉換為 URL 參數格式
+            let queryString = `?total=${orderData.total}&orders=${encodeURIComponent(orderData.orders.join("\n"))}`;
+    
+            fetch(gasUrl + queryString, {
+                method: "GET"
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert("訂單已送出！");
+            })
+            .catch(error => {
+                alert("送出失敗：" + error);
+            });
+        }
+    </script>  
+
+</body>
+</html>
