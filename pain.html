@@ -18,11 +18,21 @@
             font-weight: bold;
             z-index: 10; /* 保證顯示在最上層 */
         }
-        table th, table td {
-    width: 25%; /* 設定每列的寬度，總共四列 */
-    text-align: center; /* 讓內容置中 */
-    white-space: nowrap; /* 避免文字換行 */
-}
+        table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        th:nth-child(1), td:nth-child(1) {
+        width: 40%;
+        }
+
+        th:nth-child(2), td:nth-child(2),
+        th:nth-child(3), td:nth-child(3),
+        th:nth-child(4), td:nth-child(4) {
+        width: 20%;
+        }
+
     </style>
 </head>
 <body class="bg-gray-100 p-6">
