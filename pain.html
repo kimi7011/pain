@@ -650,13 +650,10 @@
             const submitButton = document.getElementById("submit-order");
             let activeInput = null;
 
-            // 顯示數字鍵盤並動態調整位置
+            // 顯示數字鍵盤
             document.querySelectorAll(".quantity").forEach(input => {
-                input.addEventListener("focus", (e) => {
+                input.addEventListener("focus", () => {
                     activeInput = input;
-                    const rect = input.getBoundingClientRect();
-                    numberPad.style.top = `${rect.bottom + window.scrollY + 10}px`;
-                    numberPad.style.left = `${rect.left + window.scrollX}px`;
                     numberPad.style.display = "block";
                 });
 
@@ -682,13 +679,6 @@
                         activeInput.value += value;
                     }
                     calculateAmount();
-                }
-            });
-
-            // 點擊其他地方隱藏數字鍵盤
-            document.addEventListener("click", (e) => {
-                if (!numberPad.contains(e.target) && !e.target.classList.contains("quantity")) {
-                    numberPad.style.display = "none";
                 }
             });
 
