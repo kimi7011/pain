@@ -612,26 +612,30 @@
             let orderData = calculateAmount();
             let lineName = document.getElementById("line-name").value.trim();
             let contactPhone = document.getElementById("contact-phone").value.trim();
-            let gasUrl = "https://script.google.com/macros/s/AKfycbxGrbp40999J0nBrH1YOyax1Tg_Jx1AKjC-L0QDpkPjxB2-LVb2EQQ3YxXOg8jFGXsq/exec"; // 替換為你的 GAS 網址
+            let gasUrl = "https://script.google.com/macros/s/AKfycbxGrbp40999J0nBrH1YOyax1Tg_Jx1AKjC-L0QDpkPjxB2-LVb2EQQ3YxXOg8jFGXsq/exec"; 
     
             if (!lineName || !contactPhone) {
                 alert("請填寫LINE顯示名稱與聯絡電話！");
                 return;
             }
     
-            let queryString = `?lineName=${encodeURIComponent(lineName)}&contactPhone=${encodeURIComponent(contactPhone)}&total=${orderData.total}&orders=${encodeURIComponent(orderData.orders.join("\n"))}`;
+            let orderSummary = `LINE顯示名稱: ${lineName}\n聯絡電話: ${contactPhone}\n\n訂單內容:\n${orderData.orders.join("\n")}\n\n總金額: $${orderData.total}`;
+            
+            if (confirm(orderSummary + "\n\n確認送出訂單嗎？")) {
+                let queryString = `?lineName=${encodeURIComponent(lineName)}&contactPhone=${encodeURIComponent(contactPhone)}&total=${orderData.total}&orders=${encodeURIComponent(orderData.orders.join("\n"))}`;
     
-            fetch(gasUrl + queryString, {
-                method: "GET"
-            })
-            .then(response => response.text())
-            .then(data => {
-                alert("訂單已送出！");
-            })
-            .catch(error => {
-                alert("送出失敗：" + error);
-            });
+                fetch(gasUrl + queryString, {
+                    method: "GET"
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert("訂單已送出！");
+                })
+                .catch(error => {
+                    alert("送出失敗：" + error);
+                });
+            }
         }
-    </script>  
+    </script>      
 </body>
 </html>
