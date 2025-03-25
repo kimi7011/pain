@@ -9,30 +9,54 @@
         /* 固定總金額的位置 */
         #total-price {
             position: fixed;
-            bottom: 90px; /* 調整位置以使其在送出按鈕上方 */
+            bottom: 90px;
             right: 24px;
-            background-color: rgba(255, 255, 255, 0.9); /* 增加背景色讓文字不會因為捲動而被遮擋 */
+            background-color: rgba(255, 255, 255, 0.9);
             padding: 10px;
             border-radius: 10px;
             font-size: 1.2rem;
             font-weight: bold;
-            z-index: 10; /* 保證顯示在最上層 */
+            z-index: 10;
         }
+
         table {
             table-layout: fixed;
             width: 100%;
         }
 
         th:nth-child(1), td:nth-child(1) {
-        width: 40%;
+            width: 40%;
         }
 
         th:nth-child(2), td:nth-child(2),
         th:nth-child(3), td:nth-child(3),
         th:nth-child(4), td:nth-child(4) {
-        width: 20%;
+            width: 20%;
         }
 
+        .number-pad {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 20;
+        }
+
+        .number-pad button {
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            font-size: 1.2rem;
+            text-align: center;
+            background: lightgray;
+            border: none;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-6">
@@ -40,7 +64,7 @@
         <h2 class="text-2xl font-bold mb-4 text-gray-700">揉Pain訂購表單</h2>
         
         
-        <!-- 新增 LINE 顯示名稱與聯絡電話輸入框 -->
+        <!-- LINE 顯示名稱與聯絡電話輸入框 -->
         <div class="mb-4">
             <label class="block text-gray-700">LINE顯示名稱：</label>
             <input type="text" id="line-name" class="w-full border rounded p-2" placeholder="請輸入您的LINE顯示名稱">
@@ -50,6 +74,7 @@
             <input type="tel" id="contact-phone" class="w-full border rounded p-2" placeholder="請輸入您的聯絡電話">
         </div>
 
+        <!-- 訂購表格 -->
         <table class="min-w-full border-collapse border border-gray-300 text-gray-700">
             <thead>
                 <tr class="bg-gray-200">
@@ -592,65 +617,115 @@
                 </tr>
             </tbody>
         </table>
+
+        <!-- 總金額 -->
         <div class="text-right mt-4 text-xl font-semibold text-gray-700" id="total-price">總金額: $0</div>
     </div>
-    
-    <button onclick="submitOrder()" class="fixed bottom-6 right-6 px-6 py-3 bg-blue-500 text-white rounded-full shadow-lg">送出</button>
-    
+
+    <!-- 數字鍵盤 -->
+    <div class="number-pad" id="number-pad">
+        <div class="grid grid-cols-3 gap-2">
+            <button>1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>4</button>
+            <button>5</button>
+            <button>6</button>
+            <button>7</button>
+            <button>8</button>
+            <button>9</button>
+            <button>C</button>
+            <button>0</button>
+            <button>OK</button>
+        </div>
+    </div>
+
+    <!-- 送出按鈕 -->
+    <button class="fixed bottom-6 right-6 px-6 py-3 bg-blue-500 text-white rounded-full shadow-lg" id="submit-order">送出</button>
+  
     <script>
-        function calculateAmount() {
-            let rows = document.querySelectorAll("tbody tr");
-            let total = 0;
-            let orders = [];
-    
-            rows.forEach(row => {
-                let quantityInput = row.querySelector(".quantity");
-                if (quantityInput) {
-                    let quantity = parseInt(quantityInput.value, 10);
-                    let price = parseInt(quantityInput.getAttribute("data-price"), 10);
-                    let amount = quantity * price;
-    
-                    row.querySelector(".amount").innerText = amount;
-                    total += amount;
-    
-                    if (quantity > 0) {
-                        orders.push(`${row.cells[0].innerText} x ${quantity} (${amount}元)`);
+        document.addEventListener("DOMContentLoaded", () => {
+            const totalPriceElement = document.getElementById("total-price");
+            const numberPad = document.getElementById("number-pad");
+            const submitButton = document.getElementById("submit-order");
+            let activeInput = null;
+
+            // 顯示數字鍵盤
+            document.querySelectorAll(".quantity").forEach(input => {
+                input.addEventListener("focus", () => {
+                    activeInput = input;
+                    numberPad.style.display = "block";
+                });
+
+                // 限制只能輸入數字
+                input.addEventListener("input", () => {
+                    if (isNaN(input.value) || input.value === "") {
+                        input.value = 0;
                     }
+                    calculateAmount();
+                });
+            });
+
+            // 處理數字鍵盤按鈕點擊
+            numberPad.addEventListener("click", (e) => {
+                if (e.target.tagName === "BUTTON") {
+                    const value = e.target.innerText;
+                    if (value === "C") {
+                        activeInput.value = "0";
+                    } else if (value === "OK") {
+                        numberPad.style.display = "none";
+                    } else {
+                        if (activeInput.value === "0") activeInput.value = "";
+                        activeInput.value += value;
+                    }
+                    calculateAmount();
                 }
             });
-    
-            document.getElementById("total-price").innerText = `總金額: $${total}`;
-            return { orders, total };
-        }
-    
-        function submitOrder() {
-            let orderData = calculateAmount();
-            let lineName = document.getElementById("line-name").value.trim();
-            let contactPhone = document.getElementById("contact-phone").value.trim();
-            let gasUrl = "https://script.google.com/macros/s/AKfycbxGrbp40999J0nBrH1YOyax1Tg_Jx1AKjC-L0QDpkPjxB2-LVb2EQQ3YxXOg8jFGXsq/exec"; 
-    
-            if (!lineName || !contactPhone) {
-                alert("請填寫LINE顯示名稱與聯絡電話！");
-                return;
-            }
-    
-            let orderSummary = `LINE顯示名稱: ${lineName}\n聯絡電話: ${contactPhone}\n\n訂單內容:\n${orderData.orders.join("\n")}\n\n總金額: $${orderData.total}`;
-            
-            if (confirm(orderSummary + "\n\n確認送出訂單嗎？")) {
-                let queryString = `?lineName=${encodeURIComponent(lineName)}&contactPhone=${encodeURIComponent(contactPhone)}&total=${orderData.total}&orders=${encodeURIComponent(orderData.orders.join("\n"))}`;
-    
-                fetch(gasUrl + queryString, {
-                    method: "GET"
-                })
-                .then(response => response.text())
-                .then(data => {
-                    alert("訂單已送出！");
-                })
-                .catch(error => {
-                    alert("送出失敗：" + error);
+
+            // 計算總金額
+            function calculateAmount() {
+                let total = 0;
+                document.querySelectorAll(".quantity").forEach(input => {
+                    const quantity = parseInt(input.value) || 0;
+                    const price = parseInt(input.dataset.price, 10);
+                    const amount = quantity * price;
+                    input.closest("tr").querySelector(".amount").innerText = amount;
+                    total += amount;
                 });
+                totalPriceElement.innerText = `總金額: $${total}`;
             }
-        }
-    </script>      
+
+            // 送出訂單
+            submitButton.addEventListener("click", () => {
+                const lineName = document.getElementById("line-name").value.trim();
+                const contactPhone = document.getElementById("contact-phone").value.trim();
+
+                if (!lineName || !contactPhone) {
+                    alert("請填寫LINE顯示名稱與聯絡電話！");
+                    return;
+                }
+
+                const orders = Array.from(document.querySelectorAll(".quantity"))
+                    .filter(input => parseInt(input.value) > 0)
+                    .map(input => {
+                        const row = input.closest("tr");
+                        return `${row.cells[0].innerText} x ${input.value} (${row.querySelector(".amount").innerText}元)`;
+                    });
+
+                const total = totalPriceElement.innerText.replace("總金額: $", "");
+                const orderSummary = `LINE顯示名稱: ${lineName}\n聯絡電話: ${contactPhone}\n\n訂單內容:\n${orders.join("\n")}\n\n總金額: $${total}`;
+
+                if (confirm(orderSummary + "\n\n確認送出訂單嗎？")) {
+                    const gasUrl = "https://script.google.com/macros/s/AKfycbxGrbp40999J0nBrH1YOyax1Tg_Jx1AKjC-L0QDpkPjxB2-LVb2EQQ3YxXOg8jFGXsq/exec";
+                    const queryString = `?lineName=${encodeURIComponent(lineName)}&contactPhone=${encodeURIComponent(contactPhone)}&total=${total}&orders=${encodeURIComponent(orders.join("\n"))}`;
+
+                    fetch(gasUrl + queryString)
+                        .then(response => response.text())
+                        .then(() => alert("訂單已送出！"))
+                        .catch(error => alert("送出失敗：" + error));
+                }
+            });
+        });
+    </script>
 </body>
 </html>
