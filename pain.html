@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>揉Pain訂購表單</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         /* 固定總金額的位置 */
         #total-price {
@@ -1068,33 +1069,50 @@
         }
     
         function submitOrder() {
-            let orderData = calculateAmount();
-            let lineName = document.getElementById("line-name").value.trim();
-            let contactPhone = document.getElementById("contact-phone").value.trim();
-            let gasUrl = "https://script.google.com/macros/s/AKfycbyH9k3xnqLmVZZxEQ1HtemFsdQOHWK9NmWldjPoc0rJBvTt2fk4capMAZP6Mv6pyO79/exec"; 
-    
-            if (!lineName || !contactPhone) {
-                alert("請填寫LINE顯示名稱與聯絡電話！");
-                return;
-            }
-    
-            let orderSummary = `LINE顯示名稱: ${lineName}\n聯絡電話: ${contactPhone}\n\n訂單內容:\n${orderData.orders.join("\n")}\n\n總金額: $${orderData.total}`;
-            
-            if (confirm(orderSummary + "\n\n確認送出訂單嗎？")) {
-                let queryString = `?lineName=${encodeURIComponent(lineName)}&contactPhone=${encodeURIComponent(contactPhone)}&total=${orderData.total}&orders=${encodeURIComponent(orderData.orders.join("\n"))}`;
-    
-                fetch(gasUrl + queryString, {
-                    method: "GET"
-                })
-                .then(response => response.text())
-                .then(data => {
-                    alert("訂單已送出！");
-                })
-                .catch(error => {
-                    alert("送出失敗：" + error);
-                });
-            }
+    let orderData = calculateAmount();
+    let lineName = document.getElementById("line-name").value.trim();
+    let contactPhone = document.getElementById("contact-phone").value.trim();
+    let gasUrl = "https://script.google.com/macros/s/AKfycbyH9k3xnqLmVZZxEQ1HtemFsdQOHWK9NmWldjPoc0rJBvTt2fk4capMAZP6Mv6pyO79/exec"; 
+
+    if (!lineName || !contactPhone) {
+        Swal.fire({
+            icon: 'error',
+            title: '錯誤',
+            text: '請填寫 LINE 顯示名稱與聯絡電話！'
+        });
+        return;
+    }
+
+    let orderSummary = `LINE顯示名稱: ${lineName}
+    聯絡電話: ${contactPhone}
+
+    訂單內容:
+    ${orderData.orders.join("\n")}
+
+    總金額: $${orderData.total}`.replace(/\n/g, "<br>");
+
+    Swal.fire({
+    title: '確認訂單',
+    html: orderSummary, // 改用 html 來解析 <br>
+    icon: 'info',
+    showCancelButton: true,
+    confirmButtonText: '確認送出',
+    cancelButtonText: '取消'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let queryString = `?lineName=${encodeURIComponent(lineName)}&contactPhone=${encodeURIComponent(contactPhone)}&total=${orderData.total}&orders=${encodeURIComponent(orderData.orders.join("\n"))}`;
+
+            fetch(gasUrl + queryString, { method: "GET" })
+            .then(response => response.text())
+            .then(data => {
+                Swal.fire('成功！', '訂單已送出！', 'success');
+            })
+            .catch(error => {
+                Swal.fire('錯誤', '送出失敗：' + error, 'error');
+            });
         }
+    });
+}
 
         function setDefaultValue(input) {
         // 如果輸入框為空，則設為 0
