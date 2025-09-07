@@ -53,6 +53,73 @@
         </div>
 
         <table class="min-w-full border-collapse border border-gray-300 text-gray-700">
+                </tr>
+                    <tr class="bg-gray-200">
+                    <th class="p-1 border">中秋節品項</th>
+                    <th class="p-1 border">數量</th>
+                    <th class="p-1 border">價格</th>
+                    <th class="p-1 border">金額</th>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">夢幻芋香酥3入</td>
+                    <td class="p-1 border">
+                        <input 
+                            type="tel" 
+                            class="quantity w-full text-center border rounded p-1" 
+                            data-price="260" 
+                            value="0" 
+                            min="0" 
+                            oninput="calculateAmount()" 
+                            onblur="setDefaultValue(this)">
+                    </td>
+                    <td class="p-1 border">260</td>
+                    <td class="p-1 border amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">經典蛋黃酥3入</td>
+                    <td class="p-1 border">
+                        <input 
+                            type="tel" 
+                            class="quantity w-full text-center border rounded p-1" 
+                            data-price="300" 
+                            value="0" 
+                            min="0" 
+                            oninput="calculateAmount()" 
+                            onblur="setDefaultValue(this)">
+                    </td>
+                    <td class="p-1 border">300</td>
+                    <td class="p-1 border amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">菠蘿蛋黃酥3入</td>
+                    <td class="p-1 border">
+                        <input 
+                            type="tel" 
+                            class="quantity w-full text-center border rounded p-1" 
+                            data-price="305" 
+                            value="0" 
+                            min="0" 
+                            oninput="calculateAmount()" 
+                            onblur="setDefaultValue(this)">
+                    </td>
+                    <td class="p-1 border">305</td>
+                    <td class="p-1 border amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">綜合3口味3入組</td>
+                    <td class="p-1 border">
+                        <input 
+                            type="tel" 
+                            class="quantity w-full text-center border rounded p-1" 
+                            data-price="288" 
+                            value="0" 
+                            min="0" 
+                            oninput="calculateAmount()" 
+                            onblur="setDefaultValue(this)">
+                    </td>
+                    <td class="p-1 border">288</td>
+                    <td class="p-1 border amount">0</td>
+                </tr>
                 <tr class="bg-gray-200">
                     <th class="p-1 border">菓子類(甜麵包)</th>
                     <th class="p-1 border">數量</th>
@@ -178,7 +245,6 @@
                     </td>
                     <td class="p-1 border">55</td>
                     <td class="p-1 border amount">0</td>
-                </tr>
                 <tr class="bg-gray-200">
                     <th class="p-1 border">鹹麵包</th>
                     <th class="p-1 border">數量</th>
