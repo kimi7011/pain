@@ -639,21 +639,6 @@
                     <td class="p-1 border">70</td>
                     <td class="p-1 border amount">0</td>
                 </tr>
-                            <tr class="hover:bg-gray-100 text-center">
-                    <td class="p-1 border">美莓多拿滋(需冷藏)(立即食用)</td>
-                    <td class="p-1 border">
-                        <input 
-                            type="tel" 
-                            class="quantity w-full text-center border rounded p-1" 
-                            data-price="90" 
-                            value="0" 
-                            min="0" 
-                            oninput="calculateAmount()" 
-                            onblur="setDefaultValue(this)">
-                    </td>
-                    <td class="p-1 border">90</td>
-                    <td class="p-1 border amount">0</td>
-                </tr>
                 <tr class="hover:bg-gray-100 text-center">
                     <td class="p-1 border">焦糖堅果多拿滋(需冷藏)(立即食用)</td>
                     <td class="p-1 border">
@@ -697,6 +682,22 @@
                             onblur="setDefaultValue(this)">
                     </td>
                     <td class="p-1 border">65</td>
+                    <td class="p-1 border amount">0</td>
+                </tr>
+                <tr class="hover:bg-gray-100 text-center">
+                    <td class="p-1 border">美眉多拿滋(需冷藏)(立即食用)</td>
+                    <td class="p-1 border">
+                        <input 
+                            type="tel" 
+                            class="quantity w-full text-center border rounded p-1" 
+                            data-price="90" 
+                            value="0" 
+                            min="0" 
+                            oninput="validateInput(this); calculateAmount()" 
+                            onkeydown="preventInvalidInput(event)" 
+                            onblur="setDefaultValue(this)">
+                    </td>
+                    <td class="p-1 border">90</td>
                     <td class="p-1 border amount">0</td>
                 </tr>
                 <tr class="bg-gray-200">
