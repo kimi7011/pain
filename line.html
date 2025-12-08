@@ -1,0 +1,1357 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Smile, Download, RefreshCw, Image as ImageIcon, 
+  Grid3x3, Play, Palette, Upload, X, Eraser,
+  Type, History, Trash2, Save, FileCheck, Zap,
+  Minimize, Package, Edit3, Check, Sparkles, AlertCircle,
+  Move, Plus, RotateCw, Activity,
+  LayoutTemplate, PaintBucket, Settings2, AlignCenter, 
+  Type as TypeIcon, Sliders, Wand2, Languages,
+  Pipette, Layers, Send, Copy, FileJson, Shuffle, Eye,
+  ThumbsUp, ThumbsDown, CheckCircle2, Moon, Sun, Split,
+  ImagePlus, Bold, AlignVerticalJustifyCenter, AlignHorizontalJustifyCenter,
+  Ghost, Dice5, Lightbulb, Globe, FileText, BrainCircuit, Clapperboard,
+  PawPrint, FileDown
+} from 'lucide-react';
+
+// --- Static Data ---
+const stylePresets = {
+  vector: { label: "🎨 向量插畫 (乾淨)", prompt: "Vector art, clean thick outlines, flat vibrant colors, sticker art style, white border, adobe illustrator style, svg look, minimalist" },
+  anime: { label: "👀 日系動漫 (精緻)", prompt: "Japanese anime style, cel shaded, big expressive eyes, cute chibi proportions, pastel colors, high quality animation style" },
+  white_minimal: { label: "🤍 白色極簡 (反應過激)", prompt: "Minimalist white character, reaction sticker style. Simple black loose strokes, high energy motion blur. White fill, humorous vibe, clean vector-like but messy." },
+  yuruchara: { label: "🧸 軟萌吉祥物 (療癒)", prompt: "Yuru-chara style (Japanese mascot). Soft, round, squishy body shapes. Pastel colors, cute and round, simple details, kawaii aesthetic, healing vibe." },
+  kimokawa: { label: "🤪 白爛怪誕 (醜萌)", prompt: "Kimo-kawa style, surreal, weird but cute, loose lines, funny expression, japanese mascot style, doodle aesthetic, ugly cute" },
+  office: { label: "💼 厭世上班族 (職場)", prompt: "Tired office worker aesthetic. Desaturated colors. Dead fish eyes, dark circles. Business casual attire. Passive-aggressive but polite vibe. Simple flat illustration." },
+  elder: { label: "🌺 長輩圖 (早安平安)", prompt: "Taiwanese 'Elder Greeting' style. Realistic lotus flowers or nature background photos. Bright, clashing neon text colors (red, green, blue). Outdated word-art style. overly saturated." },
+  lanlan: { label: "🤪 白爛貓風 (致敬)", prompt: "Lan Lan Cat style. Minimalist white character, shaky hand-drawn thick black outlines. Exaggerated ugly-cute facial expressions. Meme aesthetic, simple vector flat colors." },
+  brown_cony: { label: "🐻 熊大兔兔風 (致敬)", prompt: "LINE Friends style. Vector illustration, clean uniform thick outlines. Geometric round shapes, simple dots for eyes. Flat colors, no shading. Cute mascot aesthetic." },
+  pokemon: { label: "⚡ 寶可夢風 (致敬)", prompt: "Ken Sugimori Pokemon art style. Clean ink lines, distinct cel shading with hard edges. Vibrant creature design, dynamic posing." },
+  kanahei: { label: "🐰 卡娜赫拉風 (致敬)", prompt: "Kanahei style. Extremely soft, loose, organic lines. Pastel pink and white color palette. Small cute animals. rosy cheeks, dot eyes, very relaxed and healing vibe." },
+  watercolor: { label: "💧 水彩手繪 (夢幻)", prompt: "Watercolor painting, soft edges, artistic texture, gentle colors, hand-drawn feel, wet on wet technique, dreamy" },
+  pixel: { label: "👾 8-bit 像素 (遊戲)", prompt: "Pixel art, 8-bit game style, chunky pixels, vibrant retro palette, sprite sheet aesthetic" },
+  clay: { label: "🧊 3D 軟陶 (立體)", prompt: "3D clay render, blender style, plasticine texture, soft studio lighting, cute and round, isometric view" },
+  reference: { label: "📷 100% 畫風複製", prompt: "MASTERPIECE REPLICATION. Strictly analyze and copy the exact art style, line weight, coloring technique, and texture of the provided reference image. Do not generate text or bubbles from the reference." }
+};
+
+const presetFonts = {
+  rounded: { label: "圓體 (可愛)", family: '"Zen Maru Gothic", "Varela Round", "Microsoft JhengHei", sans-serif' },
+  sans: { label: "黑體 (現代)", family: '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif' },
+  serif: { label: "明體 (文青)", family: '"Noto Serif TC", "PMingLiU", serif' },
+  brush: { label: "楷體 (手寫)", family: '"KaiTi", "BiauKai", "DFKai-SB", serif' },
+  pop: { label: "波普體 (活潑)", family: '"Hachi Maru Pop", "Microsoft JhengHei", cursive' },
+  gothic: { label: "哥德體 (強烈)", family: '"Dela Gothic One", "Arial Black", sans-serif' }
+};
+
+const textPersonas = [
+  { id: 'standard', label: '標準禮貌', prompt: 'standard polite sticker text' },
+  { id: 'slang', label: '網路流行語', prompt: 'taiwanese internet slang, gen-z humor, funny, meme style' },
+  { id: 'office', label: '職場社畜', prompt: 'tired office worker, passive aggressive, business polite, meeting jargon' },
+  { id: 'tsundere', label: '傲嬌毒舌', prompt: 'tsundere anime character, sarcastic, cute but mean, emotional' },
+  { id: 'love', label: '甜蜜情侶', prompt: 'lovey dovey couple text, sweet, caring, baby talk' },
+  { id: 'taigi', label: '台語 (逮丸味)', prompt: 'Taiwanese Hokkien dialect, local slang, traditional vibe' }
+];
+
+const emotionMap = [
+  { en: "Hello", tw: "你好", cue: "Waving excitedly, big smile, sparkles" },
+  { en: "Thank you", tw: "謝謝", cue: "Bowing deeply, hands clasped, flowers" },
+  { en: "OK", tw: "OK", cue: "Making OK sign, winking, confident" },
+  { en: "Good Night", tw: "晚安", cue: "Sleeping in sleeping bag, snot bubble, moon" },
+  { en: "Sorry", tw: "拍謝", cue: "Kneeling (dogeza), crying rivers, sweating" },
+  { en: "Laughing", tw: "哈哈", cue: "Rolling on floor laughing, tears of joy" },
+  { en: "Angry", tw: "森氣氣", cue: "Extreme rage, red face, steam from ears, fire" },
+  { en: "Crying", tw: "嗚嗚", cue: "Waterfall tears, puddles of water, sobbing" }
+];
+
+// Helper to safely render text (prevents Object as React Child error)
+const SafeRender = ({ content }) => {
+  if (typeof content === 'string' || typeof content === 'number') return <>{content}</>;
+  if (typeof content === 'object' && content !== null) return <>{JSON.stringify(content)}</>;
+  return null;
+};
+
+const App = () => {
+  const apiKey = ""; 
+  const CONCURRENCY_LIMIT = 2; 
+
+  // --- State ---
+  const [totalCount, setTotalCount] = useState(8); 
+  const [characterDesc, setCharacterDesc] = useState('');
+  const [themeInput, setThemeInput] = useState('');
+  const [referenceImages, setReferenceImages] = useState([]); 
+  const [palette, setPalette] = useState([]);
+  const [forcePalette, setForcePalette] = useState(false);
+  
+  // Settings
+  const [autoRemoveBg, setAutoRemoveBg] = useState(true);
+  const [useSmartEraser, setUseSmartEraser] = useState(true);
+  const [bgTolerance, setBgTolerance] = useState(20);
+  const [addTextOverlay, setAddTextOverlay] = useState(false); 
+  const [exportForLine, setExportForLine] = useState(true); 
+  const [useSafetyPadding, setUseSafetyPadding] = useState(true);
+  const [selectedPresetStyle, setSelectedPresetStyle] = useState('white_minimal');
+  const [mainStickerId, setMainStickerId] = useState(0); 
+  const [globalDarkMode, setGlobalDarkMode] = useState(false); // FIXED variable name
+  const [globalFont, setGlobalFont] = useState('rounded'); 
+  const [chibiLevel, setChibiLevel] = useState(100);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentAction, setCurrentAction] = useState('');
+  const [stickers, setStickers] = useState([]);
+  const [viewMode, setViewMode] = useState('grid');
+  const [consistencyPrompt, setConsistencyPrompt] = useState('');
+  
+  // History & Editing
+  const [showHistory, setShowHistory] = useState(false);
+  const [savedProjects, setSavedProjects] = useState([]);
+  const [editingStickerId, setEditingStickerId] = useState(null);
+  const [gridEditingId, setGridEditingId] = useState(null); 
+  const [customFonts, setCustomFonts] = useState([]);
+  const [activeTab, setActiveTab] = useState('text');
+  
+  // Modals
+  const [showMetadataModal, setShowMetadataModal] = useState(false);
+  const [storeMetadata, setStoreMetadata] = useState(null);
+  const [showTranslationModal, setShowTranslationModal] = useState(false);
+  const [translationOptions, setTranslationOptions] = useState(null);
+  const [targetTranslationIndex, setTargetTranslationIndex] = useState(null);
+
+  // Toast
+  const [toast, setToast] = useState(null);
+
+  // Chat Simulator
+  const [chatMessages, setChatMessages] = useState([{id: 1, type: 'text', content: '貼圖預覽測試', sender: 'me'}]);
+  const [chatInput, setChatInput] = useState('');
+  
+  // Canvas Dragging State
+  const [isDraggingText, setIsDraggingText] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [initialTextPos, setInitialTextPos] = useState({ x: 0, y: 0 });
+
+  const abortControllerRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const fontInputRef = useRef(null); 
+  const globalFontInputRef = useRef(null);
+  const canvasRef = useRef(null);
+  const chatEndRef = useRef(null);
+
+  // --- Initialize ---
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.href = "https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@400;700;900&family=Zen+Maru+Gothic:wght@900&family=Hachi+Maru+Pop&family=Dela+Gothic+One&display=swap";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+
+    const script = document.createElement('script');
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    if (stickers.length === 0 || stickers.length !== totalCount) {
+      initStickers(totalCount);
+    }
+    loadHistory();
+
+    // Check system preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setGlobalDarkMode(true);
+    }
+
+    return () => { 
+      if(document.body.contains(script)) document.body.removeChild(script);
+      if(document.head.contains(link)) document.head.removeChild(link);
+    }
+  }, [totalCount]);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, viewMode]);
+
+  useEffect(() => {
+    // Apply Global Dark Mode
+    if (globalDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [globalDarkMode]);
+
+  // --- Helpers ---
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+  };
+  
+  const parseGeminiJSON = (text) => {
+    try {
+        let cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        const start = cleanText.search(/[{\[]/);
+        const end = cleanText.search(/[}\]](?!.*[}\]])/);
+        if (start !== -1 && end !== -1) {
+            const jsonString = cleanText.substring(start, end + 1);
+            return JSON.parse(jsonString);
+        }
+        return null;
+    } catch (e) {
+        console.error("JSON parse error:", e);
+        return null;
+    }
+  };
+
+  const shuffleArray = (array) => {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  const initStickers = (count) => {
+    const randomSelection = shuffleArray(emotionMap).slice(0, count);
+    const initialStickers = randomSelection.map((item, index) => ({
+      id: index,
+      en: item.en,
+      tw: item.tw,
+      cue: item.cue,
+      customPrompt: "",
+      status: 'idle', 
+      originalImage: null, 
+      baseImage: null,
+      imageUrl: null,
+      config: {
+        scale: 1, rotate: 0, x: 0, y: 0,
+        text: item.tw, font: globalFont, fontSize: 60, letterSpacing: 0, 
+        textColor: '#333333', strokeColor: '#FFFFFF', strokeWidth: 15,
+        textY: 0, textX: 0, textRotate: 0, textEffect: 'none', 
+        showText: false, isVertical: false, isBold: true,
+        hue: 0, saturation: 100, brightness: 100,
+        bgTolerance: 20, 
+        shadowColor: '#000000', shadowBlur: 0, shadowX: 0, shadowY: 0
+      }
+    }));
+    setStickers(initialStickers);
+  };
+
+  const handleFontUpload = async (e, isGlobal = false) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const buffer = await file.arrayBuffer();
+      const fontName = `CustomFont_${Date.now()}`;
+      const fontFace = new FontFace(fontName, buffer);
+      await fontFace.load();
+      document.fonts.add(fontFace);
+      setCustomFonts(prev => [...prev, { id: fontName, label: file.name.split('.')[0], family: fontName }]);
+      if (editingStickerId !== null) updateStickerConfig(editingStickerId, { font: fontName });
+      showToast(`字體 ${file.name} 載入成功！`, 'success');
+    } catch (err) { showToast("字體載入失敗", 'error'); }
+  };
+
+  const handleGridTextChange = (idx, newText) => {
+    setStickers(prev => {
+      const next = [...prev];
+      next[idx].config.text = String(newText || "");
+      return next;
+    });
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setReferenceImages(prev => [...prev, reader.result].slice(0, 5)); 
+        };
+        reader.readAsDataURL(file);
+    });
+  };
+
+  const removeReferenceImage = (index) => {
+      setReferenceImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateStickerConfig = async (idx, newConfig) => {
+    const updatedSticker = { ...stickers[idx], config: { ...stickers[idx].config, ...newConfig } };
+    setStickers(prev => { const next = [...prev]; next[idx] = updatedSticker; return next; });
+    const newImage = await renderSticker(updatedSticker);
+    setStickers(prev => { const next = [...prev]; next[idx].imageUrl = newImage; return next; });
+  };
+
+  // --- Canvas Handlers ---
+  const handleCanvasMouseDown = (e) => {
+      if (editingStickerId === null || !stickers[editingStickerId]?.config?.showText) return;
+      setIsDraggingText(true);
+      setDragStart({ x: e.clientX, y: e.clientY });
+      setInitialTextPos({ 
+          x: stickers[editingStickerId].config.textX || 0, 
+          y: stickers[editingStickerId].config.textY || 0 
+      });
+  };
+
+  const handleCanvasMouseMove = (e) => {
+      if (!isDraggingText || editingStickerId === null) return;
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+      updateStickerConfig(editingStickerId, {
+          textX: initialTextPos.x + deltaX,
+          textY: initialTextPos.y + deltaY
+      });
+  };
+
+  const handleCanvasMouseUp = () => {
+      setIsDraggingText(false);
+  };
+
+  const loadHistory = () => {
+    try {
+      const saved = localStorage.getItem('sticker_studio_v48');
+      if (saved) setSavedProjects(JSON.parse(saved));
+    } catch (e) { console.error(e); }
+  };
+
+  const saveCurrentProject = () => {
+    if (stickers.every(s => !s.baseImage)) return showToast("沒有圖片可存檔", 'error');
+    try {
+      const newProject = {
+        id: Date.now(),
+        date: new Date().toLocaleString('zh-TW'),
+        desc: characterDesc || "未命名專案",
+        count: totalCount,
+        stickers: stickers 
+      };
+      const updated = [newProject, ...savedProjects].slice(0, 5);
+      setSavedProjects(updated);
+      localStorage.setItem('sticker_studio_v48', JSON.stringify(updated));
+      showToast("專案已儲存！", 'success');
+    } catch (e) { showToast("儲存失敗：圖片過多", 'error'); }
+  };
+
+  const deleteProject = (id, e) => {
+    e.stopPropagation();
+    const updated = savedProjects.filter(p => p.id !== id);
+    setSavedProjects(updated);
+    localStorage.setItem('sticker_studio_v48', JSON.stringify(updated));
+  };
+
+  // --- Processing ---
+  const extractPalette = (base64) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 100; canvas.height = 100;
+      ctx.drawImage(img, 0, 0, 100, 100);
+      const data = ctx.getImageData(0, 0, 100, 100).data;
+      const colorCounts = {};
+      for(let i=0; i<data.length; i+=16) { 
+        const rgb = `${data[i]},${data[i+1]},${data[i+2]}`;
+        if (data[i+3] > 128) colorCounts[rgb] = (colorCounts[rgb] || 0) + 1;
+      }
+      const sorted = Object.entries(colorCounts).sort((a,b)=>b[1]-a[1]).slice(0, 5);
+      const hexPalette = sorted.map(([rgb]) => {
+        const [r,g,b] = rgb.split(',').map(Number);
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+      });
+      setPalette(hexPalette);
+    };
+    img.src = base64;
+  };
+
+  const processRawImage = (img, tolerance = 20, useSmart = true) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width; canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    const thresh = 255 - (tolerance * 2.5); 
+    const w = canvas.width;
+    const h = canvas.height;
+
+    const isWhite = (i) => data[i] > thresh && data[i+1] > thresh && data[i+2] > thresh;
+
+    if (useSmart) {
+        const queue = [];
+        const visited = new Uint8Array(w * h);
+        [[0,0], [w-1,0], [0,h-1], [w-1,h-1]].forEach(([x,y]) => {
+           const idx = (y*w + x)*4;
+           if(isWhite(idx)) { queue.push([x,y]); visited[y*w+x] = 1; }
+        });
+        while(queue.length > 0) {
+           const [x,y] = queue.pop();
+           const idx = (y*w + x)*4;
+           data[idx+3] = 0; 
+           [[x+1,y], [x-1,y], [x,y+1], [x,y-1]].forEach(([nx,ny]) => {
+              if(nx>=0 && nx<w && ny>=0 && ny<h && !visited[ny*w+nx]) {
+                 const nIdx = (ny*w + nx)*4;
+                 if(isWhite(nIdx)) { visited[ny*w+nx] = 1; queue.push([nx,ny]); }
+              }
+           });
+        }
+    } else {
+        for(let i=0; i<data.length; i+=4) { if(isWhite(i)) data[i+3] = 0; }
+    }
+    ctx.putImageData(imgData, 0, 0);
+    return canvas.toDataURL('image/png');
+  };
+
+  const reProcessBackground = async (stickerIdx) => {
+      const s = stickers[stickerIdx];
+      if (!s.originalImage) return;
+      const img = new Image();
+      img.onload = () => {
+          const newBase = processRawImage(img, s.config.bgTolerance, useSmartEraser);
+          setStickers(prev => {
+              const next = [...prev];
+              next[stickerIdx].baseImage = newBase;
+              return next;
+          });
+          renderSticker({ ...s, baseImage: newBase }).then(url => {
+             setStickers(prev => { const next = [...prev]; next[stickerIdx].imageUrl = url; return next; });
+          });
+      };
+      img.src = s.originalImage;
+  };
+
+  const restoreOriginalBackground = (stickerIdx) => {
+      const s = stickers[stickerIdx];
+      if (!s.originalImage) return;
+      setStickers(prev => { const next = [...prev]; next[stickerIdx].baseImage = s.originalImage; return next; });
+      renderSticker({ ...s, baseImage: s.originalImage }).then(url => {
+          setStickers(prev => { const next = [...prev]; next[stickerIdx].imageUrl = url; return next; });
+      });
+  };
+
+  const renderSticker = async (sticker) => {
+    if (!sticker.baseImage) return null;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        const W = 370; const H = 320;
+        canvas.width = W; canvas.height = H;
+        ctx.clearRect(0, 0, W, H);
+        ctx.save();
+        const { scale, rotate, x, y, hue, saturation, brightness } = sticker.config;
+        ctx.translate(W / 2 + x, H / 2 + y);
+        ctx.rotate((rotate * Math.PI) / 180);
+        ctx.scale(scale, scale);
+        ctx.filter = `hue-rotate(${hue}deg) saturate(${saturation}%) brightness(${brightness}%)`;
+        const ratio = Math.min((W * 0.85) / img.width, (H * 0.85) / img.height);
+        const drawW = img.width * ratio; const drawH = img.height * ratio;
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+        
+        if (sticker.config.showText && sticker.config.text) {
+          const fontSize = sticker.config.fontSize || 60; 
+          const letterSpacing = sticker.config.letterSpacing || 0; 
+          ctx.save();
+          let fontFamily = 'sans-serif';
+          if (presetFonts[sticker.config.font]) fontFamily = presetFonts[sticker.config.font].family;
+          else {
+            const custom = customFonts.find(f => f.id === sticker.config.font);
+            if (custom) fontFamily = custom.family;
+          }
+          const fontWeight = sticker.config.isBold ? 'bold' : '900';
+          ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+          
+          if (sticker.config.shadowBlur > 0 || sticker.config.shadowX !== 0 || sticker.config.shadowY !== 0) {
+              ctx.shadowColor = sticker.config.shadowColor || 'rgba(0,0,0,0.5)';
+              ctx.shadowBlur = sticker.config.shadowBlur;
+              ctx.shadowOffsetX = sticker.config.shadowX;
+              ctx.shadowOffsetY = sticker.config.shadowY;
+          }
+
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          const textX = (W / 2) + (sticker.config.textX || 0);
+          const textY = (H - 30) + (sticker.config.textY || 0);
+          
+          ctx.translate(textX, textY);
+          ctx.rotate((sticker.config.textRotate * Math.PI) / 180);
+
+          ctx.lineWidth = sticker.config.strokeWidth || 15;
+          ctx.strokeStyle = sticker.config.strokeColor;
+          ctx.lineJoin = 'round';
+          ctx.miterLimit = 2;
+          ctx.fillStyle = sticker.config.textColor;
+          const text = String(sticker.config.text || "");
+
+          if (sticker.config.isVertical) {
+             const tempShadowBlur = ctx.shadowBlur;
+             const chars = text.split('');
+             const lineHeight = fontSize * 1.1 + letterSpacing;
+             const totalHeight = chars.length * lineHeight;
+             let startY = -totalHeight / 2 + lineHeight / 2;
+             chars.forEach((char) => {
+                ctx.strokeText(char, 0, startY); ctx.fillText(char, 0, startY);
+                startY += lineHeight;
+             });
+          } else if (sticker.config.textEffect === 'arc') {
+             const angleStep = 0.2 + (letterSpacing * 0.005); 
+             const totalAngle = (text.length - 1) * angleStep;
+             ctx.rotate(-totalAngle / 2);
+             for (let i = 0; i < text.length; i++) {
+                ctx.save(); ctx.translate(0, -200); ctx.strokeText(text[i], 0, 0); ctx.fillText(text[i], 0, 0); ctx.restore(); ctx.rotate(angleStep);
+             }
+          } else if (sticker.config.textEffect === 'wave') {
+             let totalWaveWidth = 0;
+             for (let i = 0; i < text.length; i++) totalWaveWidth += ctx.measureText(text[i]).width + letterSpacing;
+             totalWaveWidth -= letterSpacing; 
+             const startX = -totalWaveWidth / 2;
+             let currentX = startX;
+             for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const charWidth = ctx.measureText(char).width;
+                const yOffset = Math.sin(i * 0.8) * 15;
+                ctx.strokeText(char, currentX + charWidth/2, yOffset); ctx.fillText(char, currentX + charWidth/2, yOffset);
+                currentX += charWidth + letterSpacing;
+             }
+          } else {
+             // Default center alignment
+             // Since we translated to textX, textY, we draw at 0,0
+             ctx.strokeText(text, 0, 0); ctx.fillText(text, 0, 0);
+          }
+          ctx.restore();
+        }
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.src = sticker.baseImage;
+    });
+  };
+
+  const toggleGlobalText = async () => {
+    const newValue = !addTextOverlay;
+    setAddTextOverlay(newValue);
+    const newStickers = stickers.map(s => ({...s, config: {...s.config, showText: newValue}}));
+    setStickers(newStickers); 
+    const promises = newStickers.map(async (s, i) => {
+        if (s.baseImage) {
+            const url = await renderSticker(s);
+            return { i, url };
+        }
+        return null;
+    });
+    const results = await Promise.all(promises);
+    results.forEach(res => { if (res) newStickers[res.i].imageUrl = res.url; });
+    setStickers(newStickers);
+  };
+
+  const applyGlobalFontToAll = async () => {
+    setCurrentAction("正在同步全域字體...");
+    setIsGenerating(true);
+    const newStickers = stickers.map(s => ({
+      ...s,
+      config: { ...s.config, font: globalFont }
+    }));
+    const promises = newStickers.map(async (s, i) => {
+       if (s.baseImage) {
+         const url = await renderSticker(s);
+         return { i, url };
+       }
+       return null;
+    });
+    const results = await Promise.all(promises);
+    results.forEach(res => { if (res) newStickers[res.i].imageUrl = res.url; });
+    setStickers(newStickers);
+    setIsGenerating(false);
+    setCurrentAction("");
+  };
+
+  const randomizeAll = async () => {
+    const newStickers = stickers.map(s => ({
+      ...s,
+      config: {
+        ...s.config,
+        rotate: (Math.random() - 0.5) * 10,
+        scale: 0.9 + Math.random() * 0.2
+      }
+    }));
+    setStickers(newStickers);
+    const promises = newStickers.map(async (s, i) => {
+        if (s.baseImage) {
+            const url = await renderSticker(s);
+            return { i, url };
+        }
+        return null;
+    });
+    const results = await Promise.all(promises);
+    results.forEach(res => { if (res) newStickers[res.i].imageUrl = res.url; });
+    setStickers(newStickers);
+  };
+
+  const downloadSingleSticker = (sticker) => {
+    if (!sticker.imageUrl) return showToast("無圖片可下載", 'error');
+    const link = document.createElement('a');
+    link.href = sticker.imageUrl;
+    link.download = `sticker_${sticker.id}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const applyToAll = async () => {
+    if (editingStickerId === null) return;
+    const src = stickers[editingStickerId].config;
+    const newStickers = stickers.map(s => ({
+      ...s,
+      config: { ...s.config, font: src.font, fontSize: src.fontSize, textColor: src.textColor, strokeColor: src.strokeColor, letterSpacing: src.letterSpacing, textEffect: src.textEffect, hue: src.hue, saturation: src.saturation, brightness: src.brightness, showText: src.showText, strokeWidth: src.strokeWidth, isVertical: src.isVertical, isBold: src.isBold }
+    }));
+    setCurrentAction("正在同步..."); setIsGenerating(true);
+    const promises = newStickers.map(async (s, i) => { if (s.baseImage) { const url = await renderSticker(s); return { i, url }; } return null; });
+    const results = await Promise.all(promises);
+    results.forEach(res => { if (res) newStickers[res.i].imageUrl = res.url; });
+    setStickers(newStickers); setIsGenerating(false); setCurrentAction("");
+  };
+
+  const downloadAll = async () => {
+    const valid = stickers.filter(s => s.imageUrl);
+    if (valid.length === 0) return showToast("無圖片", 'error');
+    setCurrentAction("打包中...");
+    const zip = new window.JSZip();
+    valid.forEach((s, i) => zip.file(`${String(i+1).padStart(2,'0')}.png`, s.imageUrl.split(',')[1], { base64: true }));
+    const mainSticker = stickers[mainStickerId].imageUrl ? stickers[mainStickerId] : valid[0];
+    if (mainSticker && mainSticker.imageUrl) {
+        const resize = (base64, w, h) => new Promise(resolve => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(i, 0, 0, w, h); resolve(c.toDataURL('image/png').split(',')[1]); }; i.src = base64; });
+        zip.file("main.png", await resize(mainSticker.imageUrl, 240, 240), { base64: true });
+        zip.file("tab.png", await resize(mainSticker.imageUrl, 96, 74), { base64: true });
+    }
+    const metadata = { title: characterDesc.substring(0, 20), stickers: valid.map((s, i) => ({ id: i+1, text: s.config.text, emotion: s.en })) };
+    zip.file("product_info.json", JSON.stringify(metadata, null, 2));
+    const blob = await zip.generateAsync({type:"blob"});
+    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `LINE_Stickers_v48_${Date.now()}.zip`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link); setCurrentAction("");
+  };
+
+  const handleSendChat = () => { if (!chatInput.trim()) return; setChatMessages([...chatMessages, { id: Date.now(), type: 'text', content: chatInput, sender: 'me' }]); setChatInput(''); };
+  const handleSendSticker = (s) => setChatMessages([...chatMessages, { id: Date.now(), type: 'sticker', content: s.imageUrl, sender: 'me' }]);
+
+  // --- Gemini API ---
+  const generateStickerListFromTheme = async () => {
+     if (!themeInput) return showToast("請輸入貼圖主題", 'error');
+     setCurrentAction("正在規劃貼圖內容...");
+     setIsGenerating(true);
+     try {
+        const prompt = `Generate a JSON array of ${totalCount} sticker concepts for a LINE sticker pack.
+        Theme: "${themeInput}".
+        Output must be in Traditional Chinese (Taiwan, 台灣繁體中文).
+        Each object should have:
+        - "tw": Traditional Chinese text (Taiwanese slang/style)
+        - "en": English meaning
+        - "cue": Visual description for AI image generator (detailed action, pose, and specific facial expression). Ensure the face matches the emotion of the text.
+        
+        Example: [{"tw": "早安", "en": "Good Morning", "cue": "Holding coffee, sunrise, smiling brightly"}, ...]`;
+        
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await response.json();
+        let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const json = parseGeminiJSON(text);
+        if (!json) throw new Error("JSON Parse Error");
+        
+        const initialStickers = json.slice(0, totalCount).map((item, index) => ({
+          id: index,
+          en: item.en,
+          tw: item.tw,
+          cue: item.cue,
+          customPrompt: "",
+          status: 'idle', 
+          originalImage: null, 
+          baseImage: null,
+          imageUrl: null,
+          config: {
+            scale: 1, rotate: 0, x: 0, y: 0,
+            text: item.tw, font: globalFont, fontSize: 60, letterSpacing: 0, 
+            textColor: '#333333', strokeColor: '#FFFFFF', strokeWidth: 15,
+            textY: 0, textX: 0, textRotate: 0, textEffect: 'none', 
+            showText: false, isVertical: false, isBold: true,
+            hue: 0, saturation: 100, brightness: 100,
+            bgTolerance: 20, 
+            shadowColor: '#000000', shadowBlur: 0, shadowX: 0, shadowY: 0
+          }
+        }));
+        setStickers(initialStickers);
+        showToast("貼圖企劃已生成！", 'success');
+     } catch(e) { showToast("生成失敗，請重試", 'error'); console.error(e); }
+     finally { setIsGenerating(false); setCurrentAction(""); }
+  };
+
+  const generateInspiration = async () => {
+    setCurrentAction("正在尋找靈感..."); setIsGenerating(true);
+    try {
+      const prompt = "Generate a creative character concept for LINE stickers. Include personality traits. Output in Traditional Chinese (Taiwan, 台灣繁體中文) max 40 words.";
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const data = await response.json();
+      if (data.candidates?.[0]?.content?.parts?.[0]?.text) setCharacterDesc(data.candidates[0].content.parts[0].text);
+    } catch(e) { showToast("靈感生成失敗", 'error'); } finally { setIsGenerating(false); setCurrentAction(""); }
+  };
+  
+  const generateStoreMetadata = async () => {
+    if (!characterDesc) return showToast("請先設定角色描述", 'error');
+    setCurrentAction("正在撰寫上架文案..."); setShowMetadataModal(true);
+    try {
+      const prompt = `Generate LINE Store metadata JSON for: "${characterDesc}". 
+      Output must be in Traditional Chinese (Taiwan, 台灣繁體中文) where applicable.
+      Fields: title (TC), description (TC), keywords (5 strings), en_title, en_description.`;
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const data = await response.json();
+      let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const json = parseGeminiJSON(text);
+      if (json) setStoreMetadata(json);
+      else throw new Error("Parse Error");
+    } catch (e) { showToast("文案生成失敗", 'error'); setShowMetadataModal(false); } finally { setCurrentAction(""); }
+  };
+
+  const translateStickerText = async (idx) => {
+    if (idx === null) return;
+    const currentText = stickers[idx].config.text;
+    setCurrentAction("正在翻譯...");
+    try {
+      const prompt = `Translate this sticker text "${currentText}" into English, Japanese (casual), Korean, and Thai. Return a JSON object like {"en": "...", "ja": "...", "ko": "...", "th": "..."}. Keep it short.`;
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const data = await response.json();
+      let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const translations = parseGeminiJSON(text);
+      
+      setTranslationOptions(translations);
+      setTargetTranslationIndex(idx);
+      setShowTranslationModal(true);
+
+    } catch (e) { console.error(e); showToast("翻譯失敗", 'error'); }
+    finally { setCurrentAction(""); }
+  };
+
+  const applyTranslation = (lang) => {
+    if (translationOptions && targetTranslationIndex !== null) {
+      updateStickerConfig(targetTranslationIndex, { text: translationOptions[lang] });
+      setShowTranslationModal(false);
+      setTranslationOptions(null);
+    }
+  };
+
+  const applyAIPersona = async (personaId) => {
+    if (!characterDesc && referenceImages.length === 0) return showToast("請先輸入角色描述", 'error');
+    const personaLabel = textPersonas.find(p=>p.id===personaId)?.label;
+    setCurrentAction(`AI 正在撰寫 ${personaLabel} 文案...`);
+    setIsGenerating(true);
+    try {
+      const targetStyle = textPersonas.find(p=>p.id===personaId).prompt;
+      const baseEmotions = emotionMap.map(e => e.en).join(", ");
+      const prompt = `Rewrite sticker list. Char: ${characterDesc}. Persona: ${targetStyle}. Lang: Traditional Chinese (Taiwan, 台灣繁體中文). Inputs: ${baseEmotions}. Output: JSON Array of strings.`;
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const data = await response.json();
+      let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+      const newTexts = parseGeminiJSON(text);
+      
+      const newStickers = stickers.map(s => ({...s, config: {...s.config}}));
+      if (newTexts && Array.isArray(newTexts)) {
+        newTexts.forEach((t, i) => { 
+            if (i < newStickers.length) { 
+              let safeText = String(t).replace(/[^\p{L}\p{N}\p{P}\p{Z}^$+~=]/gu, '');
+              newStickers[i].config.text = safeText;
+              newStickers[i].tw = safeText; 
+            } 
+        });
+        setStickers(newStickers);
+        // Rerender if needed
+        if (newStickers.some(s => s.baseImage)) {
+            setCurrentAction("正在更新圖片文字...");
+            const promises = newStickers.map(async (s, i) => { if (s.baseImage) { const url = await renderSticker(s); return { i, url }; } return null; });
+            const results = await Promise.all(promises);
+            results.forEach(res => { if (res) newStickers[res.i].imageUrl = res.url; });
+            setStickers(newStickers);
+        }
+      } else {
+        throw new Error("Invalid AI Response");
+      }
+    } catch (e) { console.error(e); showToast("AI 文案失敗", 'error'); }
+    finally { setIsGenerating(false); setCurrentAction(""); }
+  };
+
+  const analyzeCharacter = async () => {
+    setCurrentAction('正在解析角色 DNA (多圖分析)...');
+    try {
+      const stylePrompt = stylePresets[selectedPresetStyle].prompt;
+      let userPrompt = `Concept: "${characterDesc}". Target Style: ${stylePrompt}. Task: Describe character in detail based on multiple references. Ignore reference text. Output: Visual description only. 
+      CRITICAL INSTRUCTION: Analyze the character's physical features (species, color, clothes) but STRIP AWAY any specific pose or facial expression from the reference image. Describe the character in a neutral T-pose or standard standing pose. If the reference has a tongue out, IGNORE IT. If sitting, IGNORE IT. Only describe the *design*.
+      ANATOMY CHECK: If the character is a quadruped (e.g., dog, cat), explicitly state "has four legs". If it's a biped (e.g., human, bear), state "has two legs and two arms". Ensure the description enforces the correct number of limbs.
+      CUTENESS ENHANCEMENT: Describe the character with "chibi proportions", "big head", "small body", "large expressive eyes", and "round, soft shapes" to maximize cuteness.`;
+      
+      const parts = [{ text: userPrompt }];
+      referenceImages.forEach(imgData => {
+         parts.push({ inlineData: { mimeType: imgData.split(';')[0].split(':')[1], data: imgData.split(',')[1] } });
+      });
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts }] })
+      });
+      const data = await response.json();
+      const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || characterDesc;
+      setCharacterDesc(resultText);
+      return resultText;
+    } catch (e) { return characterDesc; }
+  };
+
+  const generateSingleSticker = async (idx, lockedPrompt) => {
+    const s = stickers[idx];
+    const stylePrompt = stylePresets[selectedPresetStyle].prompt;
+    const currentText = s.config.text;
+    const isDefaultText = currentText === s.tw;
+    let colorInstruction = "";
+    if (forcePalette && palette.length > 0) colorInstruction = `Colors: ${palette.join(', ')}.`;
+    
+    // Override manual prompt if exists
+    let visualInstruction;
+    if (s.customPrompt && s.customPrompt.trim() !== "") {
+        visualInstruction = `Action & Facial Expression: ${s.customPrompt}. Ignore original emotion logic.`;
+    } else {
+        visualInstruction = isDefaultText 
+          ? `Action & Facial Expression: ${s.en}. Visual Cues: ${s.cue}. Ensure the facial expression matches.` 
+          : `Action & Facial Expression: "${currentText}". Create a body pose and specific facial expression that perfectly matches the meaning/emotion of "${currentText}".`;
+    }
+    
+    const chibiPrompt = chibiLevel > 50 
+        ? "Super deformed, chibi proportions, 2 heads tall, very cute, big head small body."
+        : "Standard proportions, not too deformed.";
+
+    const fullPrompt = `
+    [Character Design]
+    ${lockedPrompt}
+
+    [Current Action & Emotion]
+    ${visualInstruction}
+
+    [Style Rules]
+    ${stylePrompt}
+    ${colorInstruction}
+    ${chibiPrompt}
+    Ensure the character's anatomy is correct (e.g., exactly four legs for a quadruped).
+    The character should be fully visible and centered within the frame, not cropped.
+
+    [Technical Constraints]
+    Centered on a pure white background for easy removal. High quality sticker art, NO text bubbles drawn by AI.
+    Focus heavily on the expressive face and body language described in [Current Action & Emotion].
+    NEGATIVE_PROMPT: white border, white outline, sticker border, die-cut border, text, typography, letters, watermark, speech bubble, japanese characters, english text, low quality, cropped, blurry, (conflicting expression), (wrong pose), cut off, partially visible.
+    `;
+    
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ instances: [{ prompt: fullPrompt }], parameters: { sampleCount: 1, aspectRatio: "1:1" } })
+    });
+    const result = await response.json();
+    if (result.predictions?.[0]?.bytesBase64Encoded) {
+      const rawBase64 = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width; canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          
+          let processed = rawBase64;
+          if (autoRemoveBg) {
+             processed = processRawImage(img, bgTolerance, useSmartEraser); // Use global init settings
+          }
+          resolve({ original: rawBase64, processed });
+        }; img.src = rawBase64;
+      });
+    }
+    throw new Error("No image");
+  };
+
+  const startGeneration = async () => {
+    if (!characterDesc && referenceImages.length === 0) return showToast("請輸入描述或上傳圖片", 'error');
+    setIsGenerating(true);
+    abortControllerRef.current = new AbortController();
+    const lockedPrompt = await analyzeCharacter();
+    setConsistencyPrompt(lockedPrompt);
+    const pendingQueue = stickers.map((s, i) => i).filter(i => !stickers[i].baseImage);
+    const total = pendingQueue.length;
+    let done = 0;
+
+    const worker = async () => {
+      while (pendingQueue.length > 0 && !abortControllerRef.current.signal.aborted) {
+        const idx = pendingQueue.shift();
+        setStickers(prev => { const n = [...prev]; n[idx].status = 'generating'; return n; });
+        try {
+          await new Promise(r => setTimeout(r, Math.random() * 800 + 200));
+          const result = await generateSingleSticker(idx, lockedPrompt);
+          setStickers(prev => { 
+            const n = [...prev]; 
+            n[idx].originalImage = result.original;
+            n[idx].baseImage = result.processed; 
+            n[idx].status = 'success'; return n;
+          });
+          const finalRender = await renderSticker({ ...stickers[idx], baseImage: result.processed });
+          setStickers(prev => { const n = [...prev]; n[idx].imageUrl = finalRender; return n; });
+        } catch (e) {
+          setStickers(prev => { const n = [...prev]; n[idx].status = 'error'; return n; });
+        } finally {
+          done++; setProgress((done / total) * 100); setCurrentAction(`進度: ${done}/${total}`);
+        }
+      }
+    };
+    const workers = Array(CONCURRENCY_LIMIT).fill(null).map(() => worker());
+    await Promise.all(workers);
+    setIsGenerating(false); setCurrentAction('生成完成'); setProgress(100);
+  };
+
+  const handleRetry = async (idx) => {
+    setStickers(prev => { const n = [...prev]; n[idx].status = 'generating'; return n; });
+    try {
+      const prompt = consistencyPrompt || characterDesc;
+      const result = await generateSingleSticker(idx, prompt);
+      
+      setStickers(prev => { 
+        const n = [...prev]; 
+        n[idx].originalImage = result.original;
+        n[idx].baseImage = result.processed; 
+        n[idx].status = 'success'; return n; 
+      });
+      const finalRender = await renderSticker({ ...stickers[idx], baseImage: result.processed });
+      setStickers(prev => { const n = [...prev]; n[idx].imageUrl = finalRender; return n; });
+    } catch (e) {
+      setStickers(prev => { const n = [...prev]; n[idx].status = 'error'; return n; });
+    }
+  };
+
+  return (
+    <div className={`flex flex-col h-screen font-sans overflow-hidden transition-colors ${globalDarkMode ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-900'}`} 
+      onMouseMove={handleCanvasMouseMove}
+      onMouseUp={handleCanvasMouseUp}
+      onTouchMove={(e) => {
+          if (!isDraggingText || editingStickerId === null) return;
+          const touch = e.touches[0];
+          const deltaX = touch.clientX - dragStart.x;
+          const deltaY = touch.clientY - dragStart.y;
+          updateStickerConfig(editingStickerId, {
+            textX: initialTextPos.x + deltaX,
+            textY: initialTextPos.y + deltaY
+          });
+      }}
+      onTouchEnd={handleCanvasMouseUp}
+    >
+      <canvas ref={canvasRef} className="hidden" />
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-bold animate-in slide-in-from-bottom-5 z-[100] ${toast.type === 'error' ? 'bg-red-500' : 'bg-slate-800 dark:bg-white dark:text-black'}`}>
+           {toast.message}
+        </div>
+      )}
+
+      {/* Translation Modal */}
+      {showTranslationModal && translationOptions && (
+         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in">
+           <div className={`rounded-2xl p-6 w-full max-w-sm shadow-2xl ${globalDarkMode ? 'bg-slate-800' : 'bg-white'}`}>
+             <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Globe className="w-5 h-5 text-blue-500"/> 選擇翻譯語言</h3>
+             <div className="space-y-2">
+               <button onClick={() => applyTranslation('en')} className="w-full text-left p-3 rounded-xl border hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors">🇺🇸 英文: <span className="font-bold"><SafeRender content={translationOptions.en}/></span></button>
+               <button onClick={() => applyTranslation('ja')} className="w-full text-left p-3 rounded-xl border hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors">🇯🇵 日文: <span className="font-bold"><SafeRender content={translationOptions.ja}/></span></button>
+               <button onClick={() => applyTranslation('ko')} className="w-full text-left p-3 rounded-xl border hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors">🇰🇷 韓文: <span className="font-bold"><SafeRender content={translationOptions.ko}/></span></button>
+               <button onClick={() => applyTranslation('th')} className="w-full text-left p-3 rounded-xl border hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors">🇹🇭 泰文: <span className="font-bold"><SafeRender content={translationOptions.th}/></span></button>
+             </div>
+             <button onClick={() => setShowTranslationModal(false)} className="mt-4 w-full py-2 text-slate-400 text-sm hover:text-slate-600">取消</button>
+           </div>
+         </div>
+      )}
+
+      {/* Metadata Modal */}
+      {showMetadataModal && storeMetadata && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in zoom-in-95">
+          <div className={`rounded-2xl shadow-2xl w-full max-w-lg p-6 relative ${globalDarkMode ? 'bg-slate-800 text-white' : 'bg-white'}`}>
+            <button onClick={() => setShowMetadataModal(false)} className="absolute top-4 right-4 p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full"><X className="w-5 h-5"/></button>
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText className="w-6 h-6 text-[#00B900]"/> 上架文案預覽</h3>
+            <div className="space-y-4">
+              <div className={`p-3 rounded-lg border ${globalDarkMode ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200'}`}>
+                 <label className="text-xs font-bold text-slate-400 block mb-1">標題 (Title)</label>
+                 <p className="font-bold"><SafeRender content={storeMetadata.title}/></p>
+              </div>
+              <div className={`p-3 rounded-lg border ${globalDarkMode ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200'}`}>
+                 <label className="text-xs font-bold text-slate-400 block mb-1">說明 (Description)</label>
+                 <p className="text-sm"><SafeRender content={storeMetadata.description}/></p>
+              </div>
+              <div className="flex flex-wrap gap-2">{storeMetadata.keywords?.map(k => <span key={k} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">#{<SafeRender content={k}/>}</span>)}</div>
+            </div>
+            <div className="mt-6 flex gap-2">
+              <button onClick={() => {navigator.clipboard.writeText(JSON.stringify(storeMetadata,null,2)); showToast("已複製 JSON", 'success');}} className="flex-1 py-2 border rounded-lg hover:bg-slate-50 text-sm font-bold flex items-center justify-center gap-2"><Copy className="w-4 h-4"/> 複製 JSON</button>
+              <button onClick={() => setShowMetadataModal(false)} className="flex-1 py-2 bg-[#00B900] text-white rounded-lg hover:bg-[#009900] text-sm font-bold">關閉</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Editor Modal --- */}
+      {editingStickerId !== null && stickers[editingStickerId] && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in">
+          <div className={`rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex overflow-hidden border ${globalDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+            {/* Preview Canvas */}
+            <div className={`flex-1 flex items-center justify-center p-8 relative ${globalDarkMode ? 'bg-slate-900' : 'bg-[#e5e5f7]'}`} 
+              style={globalDarkMode ? {} : {
+                backgroundImage: 'linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)',
+                backgroundSize: '20px 20px'
+              }}
+              onMouseDown={handleCanvasMouseDown}
+              onTouchStart={(e) => {
+                 if (!editingStickerId || !stickers[editingStickerId]?.config?.showText) return;
+                 const touch = e.touches[0];
+                 setIsDraggingText(true);
+                 setDragStart({ x: touch.clientX, y: touch.clientY });
+                 setInitialTextPos({ 
+                     x: stickers[editingStickerId].config.textX || 0, 
+                     y: stickers[editingStickerId].config.textY || 0 
+                 });
+              }}
+            >
+               
+               <div className="absolute top-4 left-4 flex gap-2 z-10">
+                 <button onClick={() => setGlobalDarkMode(!globalDarkMode)} className="bg-white/80 p-2 rounded-full shadow hover:bg-white transition-colors">
+                   {globalDarkMode ? <Sun className="w-4 h-4"/> : <Moon className="w-4 h-4"/>}
+                 </button>
+                 
+                 {/* TRANSLATE BUTTON */}
+                 <button onClick={() => translateStickerText(editingStickerId)} className="bg-white/80 px-3 py-1.5 rounded-full shadow hover:bg-white transition-colors flex items-center gap-1 text-xs font-bold text-blue-600">
+                   <Globe className="w-3 h-3"/> 翻譯
+                 </button>
+
+                 {/* DOWNLOAD SINGLE */}
+                 <button onClick={() => downloadSingleSticker(stickers[editingStickerId])} className="bg-white/80 p-2 rounded-full shadow hover:bg-white transition-colors" title="下載此貼圖 (PNG)">
+                   <FileDown className="w-4 h-4 text-slate-700"/>
+                 </button>
+                 
+                 <button onClick={() => setEditingStickerId(null)} className="md:hidden bg-white/80 p-2 rounded-full shadow"><X className="w-4 h-4"/></button>
+               </div>
+
+               {/* Interaction Hint */}
+               {stickers[editingStickerId].config.showText && (
+                   <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/20 text-white px-3 py-1 rounded-full text-xs pointer-events-none animate-pulse">
+                      可以直接拖曳文字
+                   </div>
+               )}
+
+               <div className="flex gap-4 items-center">
+                 {/* Final Render Only - Simpler UI */}
+                 <div className="flex flex-col items-center gap-2">
+                   <div className="relative group shadow-2xl rounded-lg bg-transparent w-[500px] h-[500px] flex items-center justify-center border-2 border-dashed border-[#00B900]/30 cursor-move">
+                     <img 
+                        src={stickers[editingStickerId].imageUrl || stickers[editingStickerId].baseImage} 
+                        className="max-w-full max-h-full pointer-events-none select-none" 
+                        draggable="false"
+                     />
+                   </div>
+                 </div>
+               </div>
+               
+               <button onClick={() => handleRetry(editingStickerId)} className="absolute top-6 right-6 bg-[#00B900] text-white px-5 py-3 rounded-full text-sm font-bold shadow-lg flex items-center gap-2 transition-all hover:scale-105 hover:shadow-xl z-10">
+                 <RefreshCw className={`w-4 h-4 ${stickers[editingStickerId].status === 'generating' ? 'animate-spin' : ''}`} />
+                 {stickers[editingStickerId].status === 'generating' ? '繪製中...' : `依「${String(stickers[editingStickerId].config.text)}」重繪`}
+               </button>
+            </div>
+            
+            <div className={`w-96 border-l flex flex-col ${globalDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+               <div className={`p-4 border-b flex items-center justify-between sticky top-0 z-10 ${globalDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                 <div className="flex gap-2 text-xs font-bold text-slate-500">
+                    <button className={`px-3 py-1.5 rounded-lg ${activeTab === 'text' ? 'bg-slate-800 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`} onClick={() => setActiveTab('text')}>文字</button>
+                    <button className={`px-3 py-1.5 rounded-lg ${activeTab === 'image' ? 'bg-slate-800 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`} onClick={() => setActiveTab('image')}>圖片</button>
+                    <button className={`px-3 py-1.5 rounded-lg ${activeTab === 'bg' ? 'bg-slate-800 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`} onClick={() => setActiveTab('bg')}>背景</button>
+                 </div>
+                 <button onClick={() => setEditingStickerId(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full"><X className="w-5 h-5 text-slate-400"/></button>
+               </div>
+               
+               <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                 
+                 {/* Section: AI Action Override */}
+                 <div className="space-y-3 p-4 bg-blue-50 dark:bg-slate-700 rounded-xl border border-blue-100 dark:border-slate-600">
+                    <h4 className="text-[10px] font-bold text-blue-600 dark:text-blue-300 uppercase flex items-center gap-1">
+                      <Sparkles className="w-3 h-3"/> 指定動作指令 (Prompt)
+                    </h4>
+                    <textarea 
+                      className="w-full text-xs p-2 rounded-lg border border-blue-200 dark:border-slate-500 dark:bg-slate-800 focus:ring-2 focus:ring-blue-400 outline-none text-slate-700 dark:text-slate-200 min-h-[60px]"
+                      placeholder="例：改在雨中撐傘、生氣地翻桌..."
+                      value={stickers[editingStickerId].customPrompt || ""}
+                      onChange={(e) => {
+                        const newStickers = [...stickers];
+                        newStickers[editingStickerId].customPrompt = e.target.value;
+                        setStickers(newStickers);
+                      }}
+                    />
+                    <button 
+                      onClick={() => handleRetry(editingStickerId)}
+                      className="w-full py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 flex items-center justify-center gap-1 shadow-sm transition-all active:scale-95"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${stickers[editingStickerId].status==='generating'?'animate-spin':''}`}/> 
+                      {stickers[editingStickerId].status==='generating' ? '繪製中...' : '依指令重繪'}
+                    </button>
+                 </div>
+
+                 {activeTab === 'text' && (
+                  <div className="space-y-4 animate-in fade-in">
+                   <div className="flex justify-between items-center">
+                      <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2"><Type className="w-4 h-4"/> 排版控制</h4>
+                      <div className="flex gap-2">
+                        <button onClick={applyGlobalFontToAll} className="text-[10px] text-blue-600 font-bold hover:underline">字體同步</button>
+                        <ToggleRow label="顯示" icon={TypeIcon} active={stickers[editingStickerId].config.showText} onClick={() => updateStickerConfig(editingStickerId, { showText: !stickers[editingStickerId].config.showText })} color="blue" small />
+                      </div>
+                   </div>
+                   <input value={stickers[editingStickerId].config.text} onChange={(e) => updateStickerConfig(editingStickerId, { text: e.target.value })} className="w-full p-3 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 rounded-xl bg-white text-base shadow-sm focus:ring-2 focus:ring-[#00B900] outline-none" placeholder="輸入文字..." />
+                   
+                   {/* Direction & Style */}
+                   <div className="flex gap-2">
+                      <button onClick={() => updateStickerConfig(editingStickerId, { isVertical: !stickers[editingStickerId].config.isVertical })} className={`flex-1 py-2 text-xs font-bold rounded-lg border ${stickers[editingStickerId].config.isVertical ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200'}`}>
+                         {stickers[editingStickerId].config.isVertical ? <AlignVerticalJustifyCenter className="w-4 h-4 mx-auto"/> : <AlignHorizontalJustifyCenter className="w-4 h-4 mx-auto"/>}
+                      </button>
+                      <button onClick={() => updateStickerConfig(editingStickerId, { isBold: !stickers[editingStickerId].config.isBold })} className={`flex-1 py-2 text-xs font-bold rounded-lg border ${stickers[editingStickerId].config.isBold ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200'}`}>
+                         <Bold className="w-4 h-4 mx-auto"/>
+                      </button>
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-2">
+                     <select value={stickers[editingStickerId].config.font} onChange={(e) => updateStickerConfig(editingStickerId, { font: e.target.value })} className="p-2 border rounded-lg bg-white dark:bg-slate-700 dark:border-slate-600 text-sm">
+                       <optgroup label="預設">{Object.entries(presetFonts).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}</optgroup>
+                       {customFonts.length > 0 && <optgroup label="自定義">{customFonts.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</optgroup>}
+                     </select>
+                     <button onClick={() => fontInputRef.current.click()} className="border rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center gap-2 text-xs font-bold"><Plus className="w-4 h-4"/> 上傳</button>
+                     <input type="file" ref={fontInputRef} className="hidden" accept=".ttf,.otf,.woff,.woff2" onChange={handleFontUpload} />
+                   </div>
+                   
+                   <div className="flex gap-2">
+                     <div className="flex-1 space-y-1"><label className="text-[10px] text-slate-500 font-bold">文字色</label><input type="color" value={stickers[editingStickerId].config.textColor} onChange={(e) => updateStickerConfig(editingStickerId, { textColor: e.target.value })} className="w-full h-8 cursor-pointer rounded-lg border border-slate-200" /></div>
+                     <div className="flex-1 space-y-1"><label className="text-[10px] text-slate-500 font-bold">描邊色</label><input type="color" value={stickers[editingStickerId].config.strokeColor} onChange={(e) => updateStickerConfig(editingStickerId, { strokeColor: e.target.value })} className="w-full h-8 cursor-pointer rounded-lg border border-slate-200" /></div>
+                   </div>
+
+                   <div className="flex gap-1 bg-slate-200 dark:bg-slate-700 p-1 rounded-lg">
+                      {['none', 'arc', 'wave'].map(mode => (<button key={mode} onClick={() => updateStickerConfig(editingStickerId, { textEffect: mode })} className={`flex-1 py-1.5 text-xs font-bold rounded-md capitalize transition-all ${stickers[editingStickerId].config.textEffect === mode ? 'bg-white shadow text-[#00B900]' : 'text-slate-500 hover:text-slate-700'}`}>{mode === 'none' ? '正常' : mode === 'arc' ? '彎曲' : '波浪'}</button>))}
+                   </div>
+                   
+                   <ControlSlider label="大小 (Size)" value={stickers[editingStickerId].config.fontSize} min={20} max={150} onChange={(v) => updateStickerConfig(editingStickerId, { fontSize: v })} compact />
+                   <ControlSlider label="描邊寬度" value={stickers[editingStickerId].config.strokeWidth || 15} min={0} max={30} onChange={(v) => updateStickerConfig(editingStickerId, { strokeWidth: v })} compact />
+                   <ControlSlider label="字距 (Spacing)" value={stickers[editingStickerId].config.letterSpacing} min={-10} max={50} onChange={(v) => updateStickerConfig(editingStickerId, { letterSpacing: v })} compact />
+                   
+                   <div className="border-t border-slate-100 pt-2 space-y-2">
+                      <h5 className="text-[10px] font-bold text-slate-400">陰影 (Shadow)</h5>
+                      <div className="flex gap-2">
+                        <input type="color" value={stickers[editingStickerId].config.shadowColor || '#000000'} onChange={(e) => updateStickerConfig(editingStickerId, { shadowColor: e.target.value })} className="w-8 h-8 rounded border cursor-pointer" />
+                        <ControlSlider label="模糊" value={stickers[editingStickerId].config.shadowBlur || 0} min={0} max={50} onChange={(v) => updateStickerConfig(editingStickerId, { shadowBlur: v })} compact />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <ControlSlider label="X 偏移" value={stickers[editingStickerId].config.shadowX || 0} min={-20} max={20} onChange={(v) => updateStickerConfig(editingStickerId, { shadowX: v })} compact />
+                        <ControlSlider label="Y 偏移" value={stickers[editingStickerId].config.shadowY || 0} min={-20} max={20} onChange={(v) => updateStickerConfig(editingStickerId, { shadowY: v })} compact />
+                      </div>
+                   </div>
+                  </div>
+                 )}
+
+                 {activeTab === 'image' && (
+                  <div className="space-y-4 animate-in fade-in">
+                   <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 tracking-wider"><Move className="w-4 h-4"/> 圖片微調</h4>
+                   <div className="bg-slate-100 dark:bg-slate-700 p-3 rounded-xl space-y-3">
+                      <h5 className="text-[10px] font-bold text-slate-400 uppercase">色彩濾鏡</h5>
+                      <ControlSlider label="色相 (Hue)" value={stickers[editingStickerId].config.hue} min={-180} max={180} onChange={(v) => updateStickerConfig(editingStickerId, { hue: v })} compact />
+                      <div className="grid grid-cols-2 gap-2">
+                        <ControlSlider label="飽和度" value={stickers[editingStickerId].config.saturation} min={0} max={200} onChange={(v) => updateStickerConfig(editingStickerId, { saturation: v })} compact />
+                        <ControlSlider label="亮度" value={stickers[editingStickerId].config.brightness} min={50} max={150} onChange={(v) => updateStickerConfig(editingStickerId, { brightness: v })} compact />
+                      </div>
+                   </div>
+                   <ControlSlider label="縮放大小" value={stickers[editingStickerId].config.scale} min={0.5} max={2} step={0.05} onChange={(v) => updateStickerConfig(editingStickerId, { scale: v })} />
+                   <ControlSlider label="圖片旋轉" value={stickers[editingStickerId].config.rotate} min={-45} max={45} step={1} onChange={(v) => updateStickerConfig(editingStickerId, { rotate: v })} />
+                   <div className="grid grid-cols-2 gap-4">
+                     <ControlSlider label="水平移動" value={stickers[editingStickerId].config.x} min={-200} max={200} onChange={(v) => updateStickerConfig(editingStickerId, { x: v })} compact />
+                     <ControlSlider label="垂直移動" value={stickers[editingStickerId].config.y} min={-200} max={200} onChange={(v) => updateStickerConfig(editingStickerId, { y: v })} compact />
+                   </div>
+                 </div>
+                 )}
+
+                 {activeTab === 'bg' && (
+                   <div className="space-y-4 animate-in fade-in">
+                     <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 tracking-wider"><Ghost className="w-4 h-4"/> 背景處理</h4>
+                     <div className="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-xl border border-orange-100 dark:border-orange-800 text-xs text-orange-800 dark:text-orange-200">
+                        提示：此處調整將針對「原始圖片」重新進行去背運算。
+                     </div>
+                     <ControlSlider label="去背強度 (Tolerance)" value={stickers[editingStickerId].config.bgTolerance} min={1} max={100} onChange={(v) => updateStickerConfig(editingStickerId, { bgTolerance: v })} />
+                     <div className="flex gap-2">
+                        <button onClick={() => restoreOriginalBackground(editingStickerId)} className="flex-1 py-2 border rounded-lg text-xs font-bold hover:bg-slate-100">還原原圖</button>
+                        <button onClick={() => reProcessBackground(editingStickerId)} className="flex-1 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700">執行去背</button>
+                     </div>
+                   </div>
+                 )}
+
+               </div>
+               <div className="p-5 border-t border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700">
+                 {activeTab === 'text' && <button onClick={applyToAll} className="w-full py-2 mb-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100">應用文字樣式至全部</button>}
+                 <button onClick={() => setEditingStickerId(null)} className="w-full py-3 bg-[#00B900] text-white font-bold rounded-xl shadow-lg hover:bg-[#009900] transition-transform active:scale-95">完成編輯</button>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <header className={`border-b px-4 py-2 flex items-center justify-between shadow-sm z-30 shrink-0 h-14 ${globalDarkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}>
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-br from-[#00B900] to-[#009900] p-1.5 rounded-lg text-white shadow-sm"><Zap className="w-5 h-5" /></div>
+          <h1 className="font-bold text-lg leading-none">Sticker Studio <span className="text-[#00B900] text-[10px] uppercase tracking-wider font-extrabold bg-green-50 px-1 rounded">God Mode</span></h1>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setGlobalDarkMode(!globalDarkMode)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+             {globalDarkMode ? <Sun className="w-5 h-5 text-yellow-400"/> : <Moon className="w-5 h-5 text-slate-600"/>}
+          </button>
+          
+          {characterDesc && <button onClick={generateStoreMetadata} className="hidden sm:flex text-xs font-bold text-slate-500 hover:text-[#00B900] items-center gap-1"><FileText className="w-4 h-4"/> 文案生成</button>}
+          
+          <div className={`rounded-lg p-0.5 flex border ${globalDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+             <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-all ${viewMode==='grid'?'bg-white shadow-sm text-[#00B900] dark:bg-slate-700':'text-slate-400'}`}><Grid3x3 className="w-4 h-4"/></button>
+             <button onClick={() => setViewMode('chat')} className={`p-1.5 rounded-md transition-all ${viewMode==='chat'?'bg-white shadow-sm text-[#00B900] dark:bg-slate-700':'text-slate-400'}`}><ImageIcon className="w-4 h-4"/></button>
+          </div>
+          <button onClick={downloadAll} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-slate-800 shadow-md transition-transform active:scale-95"><Package className="w-4 h-4" /> <span className="hidden sm:inline">封裝下載</span></button>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden relative">
+        <aside className={`w-72 border-r flex flex-col z-20 shadow-xl ${globalDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="space-y-3">
+               <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><Settings2 className="w-3 h-3"/> 專案設定</h3>
+               
+               <div className="space-y-2">
+                 <label className="text-[10px] font-bold text-slate-400">貼圖主題 (Theme)</label>
+                 <div className="flex gap-2">
+                   <input 
+                      value={themeInput} 
+                      onChange={(e) => setThemeInput(e.target.value)} 
+                      placeholder="例: 辦公室日常..." 
+                      className={`w-full p-2 border rounded-lg text-sm outline-none focus:border-[#00B900] ${globalDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white'}`}
+                   />
+                   <button onClick={generateStickerListFromTheme} className="bg-blue-50 text-blue-600 p-2 rounded-lg hover:bg-blue-100 flex-shrink-0" title="生成企劃"><BrainCircuit className="w-4 h-4"/></button>
+                 </div>
+               </div>
+
+               <div className="relative">
+                 <textarea value={characterDesc} onChange={(e) => setCharacterDesc(e.target.value)} disabled={isGenerating} placeholder="描述角色外觀 (例: 穿著太空衣的橘貓)..." className={`w-full h-24 p-3 border rounded-xl text-sm focus:ring-2 focus:ring-[#00B900] outline-none resize-none transition-all placeholder:text-slate-400 ${globalDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'}`} />
+                 <button onClick={generateInspiration} className="absolute bottom-2 right-2 bg-white/80 p-1.5 rounded-lg shadow hover:bg-white text-yellow-500" title="AI 靈感膠囊"><Lightbulb className="w-4 h-4"/></button>
+               </div>
+               
+               <div className="grid grid-cols-5 gap-1">{[8, 16, 24, 32, 40].map(n => (<button key={n} onClick={() => !isGenerating && setTotalCount(n)} className={`py-1.5 rounded-lg text-[10px] font-bold transition-all border ${totalCount === n ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>{n}</button>))}</div>
+            </div>
+            <div className="space-y-2">
+               <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1"><Wand2 className="w-3 h-3"/> AI 文案大師</h4>
+               <div className="grid grid-cols-2 gap-2">
+                 {textPersonas.map(p => (<button key={p.id} onClick={() => applyAIPersona(p.id)} className="py-2 px-2 bg-purple-50 text-purple-700 text-[10px] font-medium rounded-lg border border-purple-100 hover:bg-purple-100 transition-colors text-center flex items-center justify-center gap-1"><Languages className="w-3 h-3"/> {p.label}</button>))}
+               </div>
+            </div>
+            <div className="h-px bg-slate-100 dark:bg-slate-800"></div>
+            <div className="space-y-3">
+               <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><PaintBucket className="w-3 h-3"/> 風格設定</h3>
+               <select value={selectedPresetStyle} onChange={(e) => setSelectedPresetStyle(e.target.value)} className={`w-full p-2.5 text-sm border rounded-xl outline-none focus:border-[#00B900] cursor-pointer appearance-none ${globalDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-300'}`}>{Object.entries(stylePresets).map(([key, val]) => <option key={key} value={key}>{val.label}</option>)}</select>
+               
+               {/* Chibi Level Slider */}
+               <div className={`p-2 rounded-lg border ${globalDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                  <div className="flex justify-between mb-1"><span className="text-[10px] font-bold text-slate-500">Q 版程度</span><span className="text-[10px] text-slate-400">{chibiLevel}%</span></div>
+                  <input type="range" min="0" max="100" step="10" value={chibiLevel} onChange={(e) => setChibiLevel(parseInt(e.target.value))} className="w-full h-1.5 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                  <div className="flex justify-between text-[8px] text-slate-400 mt-1"><span>寫實</span><span>Q版</span></div>
+               </div>
+
+               {!referenceImages.length ? (<div onClick={() => fileInputRef.current.click()} className="border-2 border-dashed border-slate-200 rounded-xl h-20 flex flex-col items-center justify-center cursor-pointer hover:border-[#00B900] hover:bg-green-50/50 transition-colors group"><Upload className="w-5 h-5 text-slate-300 group-hover:text-[#00B900] mb-1 transition-colors"/><span className="text-[10px] text-slate-400 font-medium">上傳參考圖</span></div>) : (<div className="space-y-2"><div className="grid grid-cols-3 gap-1">{referenceImages.map((img, i) => (<div key={i} className="relative rounded-lg overflow-hidden border border-slate-200 aspect-square group"><img src={img} className="w-full h-full object-cover" /><button onClick={() => removeReferenceImage(i)} className="absolute top-0 right-0 bg-red-500/80 text-white p-0.5 opacity-0 group-hover:opacity-100"><X className="w-3 h-3"/></button></div>))}<div onClick={() => fileInputRef.current.click()} className="aspect-square border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#00B900] hover:bg-green-50/50 transition-colors"><Plus className="w-4 h-4 text-slate-300"/></div></div><div className="flex gap-1 items-center"><button onClick={() => extractPalette(referenceImages[0])} className="flex-1 text-[10px] bg-slate-100 p-1 rounded hover:bg-slate-200 flex items-center justify-center gap-1"><Pipette className="w-3 h-3"/> 提取色彩</button><div className="flex gap-0.5">{palette.map(c => <div key={c} className="w-4 h-4 rounded-full border border-slate-200" style={{backgroundColor: c}} title={c}></div>)}</div>{palette.length > 0 && <input type="checkbox" checked={forcePalette} onChange={(e)=>setForcePalette(e.target.checked)} title="強制使用" />}</div></div>)}<input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" multiple className="hidden" />
+            </div>
+            <div className="h-px bg-slate-100 dark:bg-slate-800"></div>
+            <div className="space-y-1">
+               <ToggleRow label="自動去背" icon={Eraser} active={autoRemoveBg} onClick={() => setAutoRemoveBg(!autoRemoveBg)} color="purple" />
+               <ToggleRow label="智慧防誤刪" icon={Sparkles} active={useSmartEraser} onClick={() => setUseSmartEraser(!useSmartEraser)} color="indigo" sub />
+               <ToggleRow label="顯示文字 (全域)" icon={TypeIcon} active={addTextOverlay} onClick={toggleGlobalText} color="blue" />
+               <ToggleRow label="LINE 規格 (370px)" icon={FileCheck} active={exportForLine} onClick={() => setExportForLine(!exportForLine)} color="orange" />
+            </div>
+          </div>
+          <div className="p-4 border-t bg-white sticky bottom-0 z-20">
+            {isGenerating ? (<div className="space-y-2"><div className="flex justify-between text-[10px] font-bold text-slate-500"><span>{currentAction}</span><span>{Math.round(progress)}%</span></div><div className="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-[#00B900] transition-all duration-300" style={{width: `${progress}%`}}></div></div><button onClick={() => abortControllerRef.current?.abort()} className="w-full py-2.5 bg-red-50 text-red-500 rounded-xl font-bold text-xs hover:bg-red-100 transition-colors">停止生成</button></div>) : (<button onClick={() => {if(!characterDesc && referenceImages.length === 0) return showToast("請輸入描述或上傳圖片", 'error'); startGeneration();}} className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-sm shadow-lg shadow-green-500/20 bg-[#00B900] text-white hover:bg-[#009900] transition-all active:scale-95`}>
+                {referenceImages.length > 0 ? <Dice5 className="w-4 h-4 fill-white mr-2"/> : <Play className="w-4 h-4 fill-white mr-2"/>} 
+                隨機文案量產
+             </button>)}
+          </div>
+        </aside>
+
+        <main className={`flex-1 overflow-y-auto p-8 transition-colors relative ${globalDarkMode ? 'bg-slate-950' : 'bg-slate-100'}`}>
+           {viewMode === 'grid' ? (
+             <>
+               <div className="flex justify-between items-center mb-4 max-w-6xl mx-auto">
+                 <h2 className="font-bold text-slate-500 text-xs uppercase tracking-widest flex items-center gap-2"><LayoutTemplate className="w-4 h-4"/> 貼圖總覽 ({totalCount})</h2>
+                 <button onClick={randomizeAll} className="text-xs flex items-center gap-1 text-slate-400 hover:text-[#00B900]"><Shuffle className="w-3 h-3"/> 隨機微調</button>
+               </div>
+               <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 max-w-6xl mx-auto pb-20">
+                 {stickers.map((s, idx) => (
+                   <div key={idx} className={`relative group rounded-2xl overflow-hidden transition-all duration-200 cursor-pointer border-2 ${editingStickerId === idx ? 'border-[#00B900] ring-4 ring-[#00B900]/10 scale-[1.02] shadow-xl z-10' : 'border-transparent bg-white shadow-sm hover:shadow-md hover:-translate-y-1'}`}>
+                     <div onClick={() => !isGenerating && s.baseImage && setEditingStickerId(idx)} className="relative aspect-square w-full flex items-center justify-center bg-slate-50 overflow-hidden">
+                       {s.imageUrl && <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '8px 8px'}}></div>}
+                       {s.status === 'generating' && <RefreshCw className="w-8 h-8 text-[#00B900] animate-spin opacity-50" />}
+                       {s.status === 'idle' && <span className="text-xs text-slate-300 font-bold font-mono text-4xl opacity-20">{String(idx+1).padStart(2,'0')}</span>}
+                       {s.status === 'error' && <div className="flex flex-col items-center gap-1 text-red-400"><AlertCircle className="w-6 h-6"/><span className="text-[10px] font-bold">生成失敗</span></div>}
+                       {s.imageUrl && <img src={s.imageUrl} className="relative z-10 w-full h-full object-contain p-4 transition-transform duration-300" />}
+                       {s.imageUrl && !isGenerating && <div className="absolute inset-0 z-20 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-[1px]"><div className="flex gap-2"><span className="text-white text-xs font-bold flex items-center gap-1"><Edit3 className="w-4 h-4"/> 編輯</span></div></div>}
+                       {mainStickerId === idx && <div className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-20 flex items-center gap-1"><CheckCircle2 className="w-3 h-3 fill-current"/> Main</div>}
+                     </div>
+                     <div className={`px-3 py-2 border-t flex items-center justify-between ${globalDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100'}`}>
+                       {gridEditingId === idx ? (<input autoFocus className="w-full text-[10px] font-bold text-slate-700 bg-slate-50 border border-[#00B900] rounded px-1 outline-none" value={s.config.text} onChange={(e) => handleGridTextChange(idx, e.target.value)} onBlur={() => commitGridTextChange(idx)} onKeyDown={(e) => e.key === 'Enter' && commitGridTextChange(idx)} />) : (<span onClick={() => setGridEditingId(idx)} className={`text-xs font-bold truncate max-w-[80px] hover:bg-slate-50 cursor-text px-1 rounded transition-colors ${globalDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>{String(s.config.text)}</span>)}
+                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={(e) => {e.stopPropagation(); setMainStickerId(idx)}} className="text-slate-300 hover:text-yellow-500" title="設為主圖"><CheckCircle2 className={`w-3 h-3 ${mainStickerId === idx ? 'fill-yellow-400 text-yellow-400' : ''}`}/></button></div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </>
+           ) : (
+             <div className="flex h-full gap-4 max-w-5xl mx-auto">
+               <div className="flex-1 bg-[#7289DA] rounded-3xl shadow-xl flex flex-col overflow-hidden border-4 border-slate-800/10">
+                 <div className="bg-[#5c73ba] p-3 text-white text-sm font-bold flex justify-center shadow-md">LINE Simulator</div>
+                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                   <div className="flex justify-center"><span className="bg-black/20 text-white/80 text-[10px] px-2 py-1 rounded-full">今天</span></div>
+                   {chatMessages.map(msg => (<div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>{msg.type === 'text' ? (<div className="bg-[#85e249] text-slate-900 text-sm py-2 px-3 rounded-xl rounded-tr-none shadow max-w-[70%]">{msg.content}</div>) : (<img src={msg.content} className="w-32 h-auto" />)}</div>))}
+                   <div ref={chatEndRef} />
+                 </div>
+                 <div className="bg-white h-64 border-t flex flex-col">
+                   <div className="flex-1 overflow-y-auto p-2 grid grid-cols-4 gap-2 bg-slate-50">{stickers.map(s => s.imageUrl && (<div key={s.id} onClick={() => handleSendSticker(s)} className="cursor-pointer hover:bg-slate-200 rounded p-1"><img src={s.imageUrl} className="w-full h-auto object-contain" /></div>))}</div>
+                   <div className="p-3 border-t flex gap-2"><input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e)=>e.key==='Enter'&&handleSendChat()} className="flex-1 border rounded-full px-4 py-2 text-sm outline-none focus:border-[#00B900]" placeholder="輸入訊息..." /><button onClick={handleSendChat} className="p-2 bg-[#00B900] text-white rounded-full"><Send className="w-4 h-4"/></button></div>
+                 </div>
+               </div>
+             </div>
+           )}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+const ControlSlider = ({ label, value, min, max, step=1, onChange, compact, onEnd }) => (
+  <div className={compact ? "" : "mb-2"}>
+    <div className="flex justify-between mb-1"><label className="text-[10px] font-bold text-slate-500">{label}</label><span className="text-[10px] text-slate-400">{Math.round(value * 100) / 100}</span></div>
+    <input 
+      type="range" min={min} max={max} step={step} value={value} 
+      onChange={(e) => onChange(parseFloat(e.target.value))} 
+      onMouseUp={onEnd} onKeyUp={onEnd}
+      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#00B900]" 
+    />
+  </div>
+);
+
+const ToggleRow = ({ label, icon: Icon, active, onClick, color, sub = false, small = false }) => (
+  <div className={`flex items-center justify-between ${sub ? 'pl-6 opacity-90' : ''} ${small ? '' : 'mb-2'} cursor-pointer group`} onClick={onClick}>
+    <span className={`text-[10px] font-bold text-slate-600 flex items-center gap-1.5 group-hover:text-slate-900`}><Icon className={`w-3 h-3 text-${color}-500`} /> {label}</span>
+    <div className={`w-7 h-4 rounded-full p-0.5 transition-colors duration-200 ${active ? 'bg-[#00B900]' : 'bg-slate-300'}`}><div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-200 ${active ? 'translate-x-3' : 'translate-x-0'}`} /></div>
+  </div>
+);
+
+export default App;
