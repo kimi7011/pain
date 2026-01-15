@@ -181,10 +181,20 @@
                 console.log('開始載入品項，Google Sheets URL:', sheetsUrl);
                 console.log('GAS URL:', GAS_URL);
                 
-                const fetchUrl = `${GAS_URL}?action=getItems&sheetsUrl=${encodeURIComponent(sheetsUrl)}`;
+                // 加入時間戳記避免快取
+                const timestamp = new Date().getTime();
+                const fetchUrl = `${GAS_URL}?action=getItems&sheetsUrl=${encodeURIComponent(sheetsUrl)}&_t=${timestamp}`;
                 console.log('請求 URL:', fetchUrl);
                 
-                const response = await fetch(fetchUrl);
+                // 強制不使用快取
+                const response = await fetch(fetchUrl, {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 
                 // 檢查回應狀態
                 if (!response.ok) {
@@ -320,7 +330,15 @@
             }
 
             try {
-                const response = await fetch(`${GAS_URL}?action=addItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&category=${encodeURIComponent(category)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}`);
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${GAS_URL}?action=addItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&category=${encodeURIComponent(category)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&_t=${timestamp}`, {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 const data = await response.json();
                 
                 if (data.success) {
@@ -365,7 +383,15 @@
             if (formValues) {
                 const sheetsUrl = localStorage.getItem(SHEETS_URL_KEY);
                 try {
-                    const response = await fetch(`${GAS_URL}?action=updateItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&id=${encodeURIComponent(itemId)}&category=${encodeURIComponent(formValues.category)}&name=${encodeURIComponent(formValues.name)}&price=${encodeURIComponent(formValues.price)}`);
+                    const timestamp = new Date().getTime();
+                    const response = await fetch(`${GAS_URL}?action=updateItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&id=${encodeURIComponent(itemId)}&category=${encodeURIComponent(formValues.category)}&name=${encodeURIComponent(formValues.name)}&price=${encodeURIComponent(formValues.price)}&_t=${timestamp}`, {
+                        method: 'GET',
+                        cache: 'no-cache',
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
+                        }
+                    });
                     const data = await response.json();
                     
                     if (data.success) {
@@ -394,7 +420,15 @@
             if (result.isConfirmed) {
                 const sheetsUrl = localStorage.getItem(SHEETS_URL_KEY);
                 try {
-                    const response = await fetch(`${GAS_URL}?action=deleteItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&id=${encodeURIComponent(itemId)}`);
+                    const timestamp = new Date().getTime();
+                    const response = await fetch(`${GAS_URL}?action=deleteItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&id=${encodeURIComponent(itemId)}&_t=${timestamp}`, {
+                        method: 'GET',
+                        cache: 'no-cache',
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
+                        }
+                    });
                     const data = await response.json();
                     
                     if (data.success) {
