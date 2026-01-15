@@ -1,140 +1,418 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-TW">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>揉PAin訂購表單</title>
+    <title>揉PAin 後台管理</title>
     <link rel="icon" type="image/png" href="pain.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* 固定總金額的位置 */
-        #total-price {
+        :root {
+            --primary: #8B5A2B;
+            --primary-dark: #6B4423;
+            --secondary: #F5E6D3;
+            --accent: #D4A574;
+        }
+
+        body {
+            background: linear-gradient(135deg, #F5E6D3 0%, #E8D4C4 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(139, 90, 43, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5A2B 0%, #6B4423 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(139, 90, 43, 0.4);
+        }
+
+        .btn-line {
+            background: #00B900;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-line:hover {
+            background: #009900;
+            transform: translateY(-2px);
+        }
+
+        .product-row {
+            transition: all 0.2s ease;
+        }
+
+        .product-row:hover {
+            background: rgba(212, 165, 116, 0.1);
+        }
+
+        .tab-active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .modal-overlay {
             position: fixed;
-            bottom: 90px;
-            right: 24px;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            z-index: 10;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
         }
 
-        table {
-            table-layout: fixed;
-            width: 100%;
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        th:nth-child(1),
-        td:nth-child(1) {
-            width: 40%;
-        }
-
-        th:nth-child(2),
-        td:nth-child(2),
-        th:nth-child(3),
-        td:nth-child(3),
-        th:nth-child(4),
-        td:nth-child(4) {
-            width: 20%;
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
 
-<body class="bg-gray-100 p-6">
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h2 class="text-2xl font-bold mb-4 text-gray-700">揉PAin訂購表單</h2>
+<body class="p-4 md:p-8">
+    <!-- ============ 登入頁面 ============ -->
+    <div id="login-page" class="flex items-center justify-center min-h-screen">
+        <div class="glass-card p-8 text-center max-w-md w-full">
+            <div class="text-6xl mb-4">🍞</div>
+            <h1 class="text-3xl font-bold text-amber-800 mb-2">揉PAin</h1>
+            <p class="text-gray-600 mb-8">後台管理系統</p>
 
-        <!-- LINE 顯示名稱與聯絡電話輸入框 -->
-        <div class="mb-4">
-            <label class="block text-gray-700">LINE顯示名稱：</label>
-            <input type="text" id="line-name" class="w-full border rounded p-2" placeholder="請輸入您的LINE顯示名稱">
-        </div>
-        <div class="mb-4">
-            <label class="block text-gray-700">聯絡電話：</label>
-            <input type="tel" id="contact-phone" class="w-full border rounded p-2" placeholder="請輸入您的聯絡電話">
-        </div>
+            <button onclick="loginWithLine()" class="btn-line mx-auto">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12 2C6.48 2 2 5.82 2 10.5c0 4.13 3.67 7.6 8.62 8.35.34.07.79.22.91.5.11.26.07.66.03.92l-.15.9c-.04.26-.2 1.01.89.55s5.9-3.47 8.05-5.94C21.85 13.17 22 11.88 22 10.5 22 5.82 17.52 2 12 2z" />
+                </svg>
+                使用 LINE 登入
+            </button>
 
-        <table class="min-w-full border-collapse border border-gray-300 text-gray-700">
-            <tbody id="products-table">
-                <tr>
-                    <td colspan="4" class="p-8 text-center text-gray-500">
-                        <div class="loading-spinner mx-auto mb-2"></div>
-                        <p>載入商品中...</p>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <div class="text-right mt-4 text-xl font-semibold text-gray-700" id="total-price">總金額: $0</div>
+            <p class="text-sm text-gray-500 mt-6">僅限授權管理員登入</p>
+        </div>
     </div>
 
-    <button onclick="submitOrder()"
-        class="fixed bottom-6 right-6 px-6 py-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition">送出訂單</button>
+    <!-- ============ 主要管理頁面 ============ -->
+    <div id="admin-page" class="hidden max-w-6xl mx-auto">
+        <!-- 頂部導航 -->
+        <div class="glass-card p-4 mb-6 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">🍞</span>
+                <div>
+                    <h1 class="text-xl font-bold text-amber-800">揉PAin 後台</h1>
+                    <p class="text-sm text-gray-500" id="admin-name">管理員</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="text-gray-500 hover:text-red-500 transition">
+                登出
+            </button>
+        </div>
+
+        <!-- 標籤頁 -->
+        <div class="flex gap-2 mb-6">
+            <button onclick="showTab('products')" id="tab-products" class="px-6 py-3 rounded-lg font-medium tab-active">
+                商品管理
+            </button>
+            <button onclick="showTab('orders')" id="tab-orders"
+                class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
+                訂單查看
+            </button>
+        </div>
+
+        <!-- 商品管理區 -->
+        <div id="products-section" class="glass-card p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-amber-800">商品列表</h2>
+                <button onclick="showAddProductModal()" class="btn-primary">
+                    + 新增商品
+                </button>
+            </div>
+
+            <!-- 商品表格 -->
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-amber-200">
+                            <th class="text-left p-3 text-amber-800">分類</th>
+                            <th class="text-left p-3 text-amber-800">品名</th>
+                            <th class="text-right p-3 text-amber-800">價格</th>
+                            <th class="text-left p-3 text-amber-800">備註</th>
+                            <th class="text-center p-3 text-amber-800">狀態</th>
+                            <th class="text-center p-3 text-amber-800">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table">
+                        <tr>
+                            <td colspan="6" class="text-center py-8 text-gray-500">載入中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 訂單查看區 -->
+        <div id="orders-section" class="glass-card p-6 hidden">
+            <h2 class="text-xl font-bold text-amber-800 mb-6">訂單列表</h2>
+            <div id="orders-list">
+                <p class="text-center py-8 text-gray-500">載入中...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ 新增/編輯商品 Modal ============ -->
+    <div id="product-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modal-title" class="text-xl font-bold text-amber-800 mb-6">新增商品</h3>
+            <form id="product-form" onsubmit="saveProduct(event)">
+                <input type="hidden" id="product-id">
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">分類 *</label>
+                    <select id="product-category" class="w-full border rounded-lg p-3" required>
+                        <option value="">請選擇分類</option>
+                        <option value="菓子類(甜麵包)">菓子類(甜麵包)</option>
+                        <option value="鹹麵包">鹹麵包</option>
+                        <option value="吐司類&餐包類">吐司類&餐包類</option>
+                        <option value="多拿滋">多拿滋</option>
+                        <option value="可頌類">可頌類</option>
+                        <option value="歐式麵包">歐式麵包</option>
+                        <option value="法國類">法國類</option>
+                        <option value="甜點類">甜點類</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">品名 *</label>
+                    <input type="text" id="product-name" class="w-full border rounded-lg p-3" required
+                        placeholder="請輸入品名">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">價格 *</label>
+                    <input type="number" id="product-price" class="w-full border rounded-lg p-3" required
+                        placeholder="請輸入價格" min="0">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">備註</label>
+                    <input type="text" id="product-note" class="w-full border rounded-lg p-3" placeholder="例：需冷藏、六日限定">
+                </div>
+
+                <div class="mb-6">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="product-enabled" checked class="w-5 h-5">
+                        <span class="text-gray-700">啟用販售</span>
+                    </label>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" class="btn-primary flex-1">儲存</button>
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 px-6 py-3 bg-gray-200 rounded-lg">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         // ============ 設定 ============
         // TODO: 部署 Apps Script 後，將 URL 更新到這裡
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzBjMrSZNLiqaTf90qvBC6oxB18CG--atfHzk9uU4je0z0ef1hDbZtdhVlLkYOl335VmA/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbw87FdNqOwzoZuR9crNG0BbkTQKTCF1kYvj0seUVRXBScrn0kx6jxjkTSJ9CJ5OzBUKew/exec';
 
+        // LINE Login 設定
+        // TODO: 建立 LINE Login Channel 後，將 Channel ID 更新到這裡
+        const LINE_LOGIN_CHANNEL_ID = '2008902569';
+        const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/admin.html';
+        const ADMIN_USER_ID = 'U523fe140da9b40fff66ae287f6d4c547';
+
+        // 狀態
+        let currentUser = null;
         let products = [];
 
         // ============ 初始化 ============
         document.addEventListener('DOMContentLoaded', () => {
-            loadProducts();
+            // 檢查 URL 是否有 LINE Login 回傳的 code
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+
+            if (code) {
+                // 從 LINE Login 返回
+                handleLineCallback(code, state);
+            } else {
+                // 檢查是否已登入
+                checkLoginStatus();
+            }
         });
 
-        // ============ 載入商品 ============
+        // ============ LINE Login ============
+        function loginWithLine() {
+            const state = generateRandomState();
+            localStorage.setItem('line_login_state', state);
+
+            const authUrl = `https://access.line.me/oauth2/v2.1/authorize?` +
+                `response_type=code&` +
+                `client_id=${LINE_LOGIN_CHANNEL_ID}&` +
+                `redirect_uri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}&` +
+                `state=${state}&` +
+                `scope=profile%20openid`;
+
+            window.location.href = authUrl;
+        }
+
+        function generateRandomState() {
+            return Math.random().toString(36).substring(2, 15);
+        }
+
+        async function handleLineCallback(code, state) {
+            // 驗證 state (改用 localStorage 以避免 iOS 跨瀏覽器問題)
+            const savedState = localStorage.getItem('line_login_state');
+
+            // 清除用過的 state
+            localStorage.removeItem('line_login_state');
+
+            if (!savedState || state !== savedState) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '驗證失敗',
+                    text: `State 不符合 (Saved: ${savedState}, Returned: ${state})。請嘗試重新登入。`,
+                    confirmButtonText: '確定'
+                }).then(() => {
+                    window.location.href = 'admin.html';
+                });
+                return;
+            }
+
+            // 顯示載入中
+            Swal.fire({
+                title: '登入驗證中...',
+                text: '正在與伺服器交換金鑰',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                // 透過 Apps Script 後端處理 Token 交換
+                const response = await fetch(`${GAS_URL}?action=lineLogin&code=${encodeURIComponent(code)}`);
+                const result = await response.json();
+
+                // 清除 URL 參數
+                window.history.replaceState({}, document.title, 'admin.html');
+
+                if (result.success && result.isAdmin) {
+                    // 登入成功
+                    currentUser = result.user;
+                    localStorage.setItem('admin_user', JSON.stringify(currentUser));
+                    Swal.close();
+                    showAdminPage();
+                } else {
+                    // 登入失敗
+                    Swal.fire({
+                        icon: 'error',
+                        title: '登入失敗',
+                        text: result.error || '您沒有管理員權限',
+                        confirmButtonText: '確定'
+                    });
+                }
+            } catch (error) {
+                // 清除 URL 參數
+                window.history.replaceState({}, document.title, 'admin.html');
+                Swal.fire('錯誤', '登入失敗：' + error.message, 'error');
+            }
+        }
+
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('admin_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showAdminPage();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_user');
+            currentUser = null;
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('admin-page').classList.add('hidden');
+        }
+
+        // ============ 頁面顯示 ============
+        function showAdminPage() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('admin-page').classList.remove('hidden');
+            document.getElementById('admin-name').textContent = currentUser.displayName || '管理員';
+            loadProducts();
+        }
+
+        function showTab(tab) {
+            const tabs = ['products', 'orders'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.remove('tab-active');
+                document.getElementById(`tab-${t}`).classList.add('bg-white', 'text-gray-600');
+                document.getElementById(`${t}-section`).classList.add('hidden');
+            });
+
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            document.getElementById(`tab-${tab}`).classList.remove('bg-white', 'text-gray-600');
+            document.getElementById(`${tab}-section`).classList.remove('hidden');
+
+            if (tab === 'orders') {
+                loadOrders();
+            }
+        }
+
+        // ============ 商品管理 ============
         async function loadProducts() {
             try {
                 const response = await fetch(`${GAS_URL}?action=getProducts`);
                 const result = await response.json();
 
                 if (result.success) {
-                    products = result.products.filter(p => p.enabled);
+                    products = result.products;
                     renderProducts();
                 } else {
                     throw new Error(result.error);
                 }
             } catch (error) {
                 document.getElementById('products-table').innerHTML = `
-                    <tr>
-                        <td colspan="4" class="p-8 text-center text-red-500">
-                            載入失敗：${error.message}<br>
-                            <button onclick="loadProducts()" class="mt-2 text-blue-500 underline">重試</button>
-                        </td>
-                    </tr>`;
+                    <tr><td colspan="6" class="text-center py-8 text-red-500">
+                        載入失敗：${error.message}
+                    </td></tr>`;
             }
         }
 
-        // ============ 渲染商品 ============
         function renderProducts() {
             const tbody = document.getElementById('products-table');
 
             if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500">目前沒有商品</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">尚無商品</td></tr>';
                 return;
             }
 
@@ -147,34 +425,31 @@
 
             let html = '';
             Object.entries(grouped).forEach(([category, items]) => {
-                // 分類標題
-                html += `
-                    <tr class="bg-gray-200">
-                        <th class="p-1 border">${category}</th>
-                        <th class="p-1 border">數量</th>
-                        <th class="p-1 border">價格</th>
-                        <th class="p-1 border">金額</th>
-                    </tr>`;
-
-                // 商品列
                 items.forEach(p => {
-                    const displayName = p.note ? `${p.name}(${p.note})` : p.name;
+                    const statusClass = p.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
+                    const statusText = p.enabled ? '啟用' : '停用';
+
                     html += `
-                        <tr class="hover:bg-gray-100 text-center">
-                            <td class="p-1 border">${displayName}</td>
-                            <td class="p-1 border">
-                                <input 
-                                    type="tel" 
-                                    class="quantity w-full text-center border rounded p-1" 
-                                    data-price="${p.price}"
-                                    data-name="${p.name}"
-                                    value="0" 
-                                    min="0" 
-                                    oninput="validateInput(this); calculateAmount()" 
-                                    onblur="setDefaultValue(this)">
+                        <tr class="product-row border-b border-gray-100">
+                            <td class="p-3 text-gray-600">${p.category}</td>
+                            <td class="p-3 font-medium">${p.name}</td>
+                            <td class="p-3 text-right cursor-pointer hover:bg-amber-50 rounded" 
+                                onclick="editPrice(this, ${p.id}, ${p.price})" 
+                                title="點擊修改價格">
+                                $${p.price}
                             </td>
-                            <td class="p-1 border">${p.price}</td>
-                            <td class="p-1 border amount">0</td>
+                            <td class="p-3 text-gray-500 text-sm">${p.note || '-'}</td>
+                            <td class="p-3 text-center">
+                                <span onclick="toggleProductStatus(${p.id})" 
+                                      class="px-2 py-1 rounded text-xs ${statusClass} cursor-pointer hover:opacity-80 transition select-none"
+                                      title="點擊切換狀態">
+                                    ${statusText}
+                                </span>
+                            </td>
+                            <td class="p-3 text-center">
+                                <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 mr-2">編輯</button>
+                                <button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700">刪除</button>
+                            </td>
                         </tr>`;
                 });
             });
@@ -182,127 +457,289 @@
             tbody.innerHTML = html;
         }
 
-        // ============ 計算金額 ============
-        function calculateAmount() {
-            let rows = document.querySelectorAll("#products-table tr");
-            let total = 0;
-            let orders = [];
+        // ---- 直覺編輯功能 ----
 
-            rows.forEach(row => {
-                let quantityInput = row.querySelector(".quantity");
-                if (quantityInput) {
-                    let quantity = parseInt(quantityInput.value, 10) || 0;
-                    let price = parseInt(quantityInput.getAttribute("data-price"), 10);
-                    let name = quantityInput.getAttribute("data-name");
-                    let amount = quantity * price;
+        function editPrice(cell, id, currentPrice) {
+            // 避免重複點擊產生多個 input
+            if (cell.querySelector('input')) return;
 
-                    row.querySelector(".amount").innerText = amount;
-                    total += amount;
+            const originalContent = cell.innerHTML;
 
-                    if (quantity > 0) {
-                        orders.push(`${name} x ${quantity} (${amount}元)`);
-                    }
-                }
-            });
+            cell.innerHTML = `
+                <input type="number" 
+                       value="${currentPrice}" 
+                       class="w-20 p-1 border rounded text-right focus:ring-2 focus:ring-amber-500 outline-none"
+                       onblur="savePrice(this, ${id}, ${currentPrice})"
+                       onkeydown="if(event.key==='Enter') this.blur()"
+                       autoFocus
+                >
+            `;
 
-            document.getElementById("total-price").innerText = `總金額: $${total}`;
-            return { orders, total };
+            // 自動聚焦
+            const input = cell.querySelector('input');
+            input.focus();
+
+            // 如果 input 失去焦點時沒有改變，還原
+            input.dataset.original = originalContent;
         }
 
-        // ============ 提交訂單 ============
-        async function submitOrder() {
-            let orderData = calculateAmount();
-            let lineName = document.getElementById("line-name").value.trim();
-            let contactPhone = document.getElementById("contact-phone").value.trim();
+        async function savePrice(input, id, oldPrice) {
+            const newPrice = parseInt(input.value);
+            const cell = input.parentElement;
 
-            if (!lineName || !contactPhone) {
-                Swal.fire({
-                    icon: 'error',
-                    title: '錯誤',
-                    text: '請填寫 LINE 顯示名稱與聯絡電話！'
-                });
+            if (isNaN(newPrice) || newPrice < 0) {
+                Swal.fire('錯誤', '請輸入有效的價格', 'error');
+                cell.innerHTML = input.dataset.original; // 還原
                 return;
             }
 
-            if (orderData.orders.length === 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: '錯誤',
-                    text: '請至少選擇一項商品！'
-                });
+            if (newPrice === oldPrice) {
+                cell.innerHTML = `$${oldPrice}`; // 沒變，還原顯示
                 return;
             }
 
-            let orderSummary = `LINE顯示名稱: ${lineName}
-聯絡電話: ${contactPhone}
+            // 顯示載入狀態
+            cell.innerHTML = `<span class="text-gray-400">更新中...</span>`;
 
-訂單內容:
-${orderData.orders.join("\n")}
+            const product = products.find(p => p.id == id);
+            if (!product) return;
 
-總金額: $${orderData.total}`.replace(/\n/g, "<br>");
+            const updatedProduct = { ...product, price: newPrice };
 
+            const success = await callUpdateAPI(updatedProduct);
+
+            if (success) {
+                product.price = newPrice; // 更新本地資料
+                renderProducts();
+                Toast.fire({ icon: 'success', title: '價格已更新' });
+            } else {
+                cell.innerHTML = `$${oldPrice}`; // 失敗還原
+            }
+        }
+
+        async function toggleProductStatus(id) {
+            const product = products.find(p => p.id == id);
+            if (!product) return;
+
+            // 立即顯示切換狀態（提升 UX），失敗再切回來
+            const oldStatus = product.enabled;
+            product.enabled = !product.enabled; // Optimistic update
+            renderProducts();
+
+            const success = await callUpdateAPI(product);
+
+            if (success) {
+                Toast.fire({ icon: 'success', title: product.enabled ? '商品已啟用' : '商品已停用' });
+            } else {
+                product.enabled = oldStatus; // 失敗還原
+                renderProducts();
+            }
+        }
+
+        // 通用 API 呼叫函數
+        async function callUpdateAPI(productData) {
+            const data = {
+                userId: currentUser?.userId || ADMIN_USER_ID,
+                id: productData.id,
+                category: productData.category,
+                name: productData.name,
+                price: productData.price,
+                note: productData.note,
+                enabled: productData.enabled
+            };
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=updateProduct`, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    return true;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '更新失敗：' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // SweetAlert Toast 設定
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        // --------------------
+
+        function showAddProductModal() {
+            document.getElementById('modal-title').textContent = '新增商品';
+            document.getElementById('product-id').value = '';
+            document.getElementById('product-form').reset();
+            document.getElementById('product-enabled').checked = true;
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id == id);
+            if (!product) return;
+
+            document.getElementById('modal-title').textContent = '編輯商品';
+            document.getElementById('product-id').value = product.id;
+            document.getElementById('product-category').value = product.category;
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-price').value = product.price;
+            document.getElementById('product-note').value = product.note || '';
+            document.getElementById('product-enabled').checked = product.enabled;
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        async function saveProduct(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('product-id').value;
+            const data = {
+                userId: currentUser?.userId || ADMIN_USER_ID,
+                id: id,
+                category: document.getElementById('product-category').value,
+                name: document.getElementById('product-name').value,
+                price: document.getElementById('product-price').value,
+                note: document.getElementById('product-note').value,
+                enabled: document.getElementById('product-enabled').checked
+            };
+
+            const action = id ? 'updateProduct' : 'addProduct';
+
+            try {
+                Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${GAS_URL}?action=${action}`, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire('成功', result.message, 'success');
+                    closeModal();
+                    loadProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        async function deleteProduct(id) {
             const result = await Swal.fire({
-                title: '確認訂單',
-                html: orderSummary,
-                icon: 'info',
+                title: '確認刪除？',
+                text: '此操作無法復原',
+                icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: '確認送出',
+                confirmButtonColor: '#d33',
+                confirmButtonText: '刪除',
                 cancelButtonText: '取消'
             });
 
             if (!result.isConfirmed) return;
 
-            // 顯示載入中
-            Swal.fire({
-                title: '送出中...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
             try {
-                const response = await fetch(`${GAS_URL}?action=submitOrder`, {
+                const response = await fetch(`${GAS_URL}?action=deleteProduct`, {
                     method: 'POST',
                     body: JSON.stringify({
-                        lineName: lineName,
-                        contactPhone: contactPhone,
-                        orders: orderData.orders.join("\n"),
-                        total: orderData.total
+                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        id: id
                     })
                 });
-
                 const data = await response.json();
 
                 if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '訂單已送出！',
-                        text: `訂單編號：${data.orderId}`,
-                        confirmButtonText: '確定'
-                    }).then(() => {
-                        // 重置表單
-                        document.querySelectorAll('.quantity').forEach(input => input.value = '0');
-                        document.querySelectorAll('.amount').forEach(td => td.innerText = '0');
-                        document.getElementById('total-price').innerText = '總金額: $0';
-                    });
+                    Swal.fire('成功', '商品已刪除', 'success');
+                    loadProducts();
                 } else {
                     throw new Error(data.error);
                 }
             } catch (error) {
-                Swal.fire('錯誤', '送出失敗：' + error.message, 'error');
+                Swal.fire('錯誤', error.message, 'error');
             }
         }
 
-        // ============ 輔助函數 ============
-        function setDefaultValue(input) {
-            if (input.value.trim() === '') {
-                input.value = '0';
+        // ============ 訂單管理 ============
+        async function loadOrders() {
+            const ordersList = document.getElementById('orders-list');
+            ordersList.innerHTML = '<p class="text-center py-8 text-gray-500">載入中...</p>';
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=getOrders&userId=${ADMIN_USER_ID}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    renderOrders(result.orders);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                ordersList.innerHTML = `<p class="text-center py-8 text-red-500">載入失敗：${error.message}</p>`;
             }
         }
 
-        function validateInput(input) {
-            input.value = input.value.replace(/[^0-9]/g, '');
+        function renderOrders(orders) {
+            const ordersList = document.getElementById('orders-list');
+
+            if (!orders || orders.length === 0) {
+                ordersList.innerHTML = '<p class="text-center py-8 text-gray-500">尚無訂單</p>';
+                return;
+            }
+
+            let html = '';
+            orders.forEach(order => {
+                const date = new Date(order.timestamp);
+                const dateStr = date.toLocaleString('zh-TW');
+
+                html += `
+                    <div class="border-b border-gray-100 py-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="font-bold text-amber-800">#${order.orderId}</span>
+                                <span class="text-gray-500 text-sm ml-2">${dateStr}</span>
+                            </div>
+                            <span class="font-bold text-lg">$${order.total}</span>
+                        </div>
+                        <div class="text-gray-600">
+                            <p><span class="font-medium">顧客：</span>${order.lineName}</p>
+                            <p><span class="font-medium">電話：</span>${order.phone}</p>
+                            <p class="mt-2 text-sm whitespace-pre-line">${order.items}</p>
+                        </div>
+                    </div>`;
+            });
+
+            ordersList.innerHTML = html;
+        }
+
+        // ============ 測試用：模擬登入（正式環境請移除）============
+        // 開發階段可以使用此函數測試後台功能
+        function devLogin() {
+            currentUser = {
+                userId: ADMIN_USER_ID,
+                displayName: '測試管理員'
+            };
+            localStorage.setItem('admin_user', JSON.stringify(currentUser));
+            showAdminPage();
         }
     </script>
 </body>
-
-</html>
+```
