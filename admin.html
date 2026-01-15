@@ -1472,7 +1472,7 @@
             });
 
             // 公告
-            document.getElementById('announcement_enabled').checked = storeSettings.announcement_enabled === 'true';
+            document.getElementById('announcement_enabled').checked = String(storeSettings.announcement_enabled) === 'true';
             document.getElementById('announcement').value = storeSettings.announcement || '';
         }
 
