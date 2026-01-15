@@ -274,21 +274,21 @@
                         <tr class="product-row text-center border-b border-amber-100">
                             <td class="p-2 text-left text-gray-700">${displayName}</td>
                             <td class="p-2">
-                                <div class="flex items-center justify-center gap-2">
-                                    <button class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200 flex items-center justify-center font-bold pb-1"
+                                <div class="flex items-center justify-center gap-1">
+                                    <button class="w-10 h-10 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200 flex items-center justify-center font-bold text-xl active:bg-amber-300 transition-colors"
                                         onclick="updateQuantity(this, -1)">-</button>
                                     <input 
                                         type="tel" 
-                                        class="quantity w-12 text-center p-1 bg-transparent border-0 focus:ring-0 font-medium text-lg" 
+                                        inputmode="numeric"
+                                        class="quantity w-12 text-center p-1 bg-transparent border-0 focus:ring-0 font-medium text-lg text-amber-900" 
                                         data-price="${p.price}"
                                         data-name="${p.name}"
                                         value="0" 
                                         min="0" 
-                                        readonly
-                                        onclick="this.removeAttribute('readonly'); this.select();"
-                                        onblur="this.setAttribute('readonly', true); setDefaultValue(this)"
+                                        onfocus="this.select()"
+                                        onblur="setDefaultValue(this)"
                                         oninput="validateInput(this); calculateAmount()">
-                                    <button class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200 flex items-center justify-center font-bold pb-1"
+                                    <button class="w-10 h-10 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200 flex items-center justify-center font-bold text-xl active:bg-amber-300 transition-colors"
                                         onclick="updateQuantity(this, 1)">+</button>
                                 </div>
                             </td>
