@@ -41,13 +41,32 @@
 </head>
 <body class="bg-gray-100 p-6">
     <!-- 管理按鈕 -->
-    <button id="admin-toggle" onclick="toggleAdminPanel()" class="fixed top-6 right-6 px-4 py-2 bg-purple-500 text-white rounded-lg shadow-lg z-20">
+    <button id="admin-toggle" onclick="showLoginModal()" class="fixed top-6 right-6 px-4 py-2 bg-purple-500 text-white rounded-lg shadow-lg z-20">
         管理後台
     </button>
 
+    <!-- 登入介面 -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30" style="display: none;">
+        <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold mb-4 text-gray-700">後台登入</h2>
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">管理員密碼：</label>
+                <input type="password" id="admin-password" class="w-full border rounded p-2" placeholder="請輸入管理員密碼" onkeypress="if(event.key === 'Enter') login()">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="login()" class="flex-1 px-4 py-2 bg-blue-500 text-white rounded">登入</button>
+                <button onclick="hideLoginModal()" class="flex-1 px-4 py-2 bg-gray-500 text-white rounded">取消</button>
+            </div>
+            <p id="login-error" class="text-red-500 text-sm mt-2" style="display: none;"></p>
+        </div>
+    </div>
+
     <!-- 後台管理介面 -->
     <div id="admin-panel" class="admin-panel max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-md mb-6">
-        <h2 class="text-2xl font-bold mb-4 text-gray-700">後台管理介面</h2>
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-700">後台管理介面</h2>
+            <button onclick="logout()" class="px-4 py-2 bg-red-500 text-white rounded">登出</button>
+        </div>
         
         <div class="mb-4">
             <label class="block text-gray-700 mb-2">Google Sheets 網址：</label>
@@ -100,23 +119,123 @@
     
     <script>
         // 配置 - 請替換為您的 Google Apps Script 網址
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxUHrbLeID1tRgyQpzptSeqrMI5HyS2IuWWp0x9zzO2SHE9NYgakRMgNNuGWKaCl8CQpw/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbygmz3ueXZJlcdQzUIrtjRUAS3KQDV70j_KrMpFC3bqLQF1YCOg4KdW9kLlpNTf_LbwtA/exec";
         const SHEETS_URL_KEY = 'sheets_url';
+        const ADMIN_SESSION_KEY = 'admin_session';
         
         let itemsData = [];
         let isAdminMode = false;
+        let isLoggedIn = false;
+
+        // 檢查登入狀態
+        function checkLoginStatus() {
+            const session = sessionStorage.getItem(ADMIN_SESSION_KEY);
+            if (session) {
+                try {
+                    const sessionData = JSON.parse(session);
+                    // 檢查 session 是否過期（24小時）
+                    if (Date.now() - sessionData.timestamp < 24 * 60 * 60 * 1000) {
+                        isLoggedIn = true;
+                        return true;
+                    } else {
+                        sessionStorage.removeItem(ADMIN_SESSION_KEY);
+                    }
+                } catch (e) {
+                    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+                }
+            }
+            isLoggedIn = false;
+            return false;
+        }
+
+        // 顯示登入介面
+        function showLoginModal() {
+            if (checkLoginStatus()) {
+                // 已登入，直接進入後台
+                toggleAdminPanel();
+            } else {
+                // 未登入，顯示登入介面
+                document.getElementById('login-modal').style.display = 'flex';
+                document.getElementById('admin-password').focus();
+            }
+        }
+
+        // 隱藏登入介面
+        function hideLoginModal() {
+            document.getElementById('login-modal').style.display = 'none';
+            document.getElementById('admin-password').value = '';
+            document.getElementById('login-error').style.display = 'none';
+        }
+
+        // 登入
+        async function login() {
+            const password = document.getElementById('admin-password').value.trim();
+            const errorElement = document.getElementById('login-error');
+            
+            if (!password) {
+                errorElement.textContent = '請輸入密碼';
+                errorElement.style.display = 'block';
+                return;
+            }
+
+            try {
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${GAS_URL}?action=verifyPassword&password=${encodeURIComponent(password)}&_t=${timestamp}`, {
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 登入成功，儲存 session
+                    sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({
+                        timestamp: Date.now(),
+                        token: data.token || 'authenticated'
+                    }));
+                    isLoggedIn = true;
+                    hideLoginModal();
+                    toggleAdminPanel();
+                } else {
+                    errorElement.textContent = data.error || '密碼錯誤';
+                    errorElement.style.display = 'block';
+                    document.getElementById('admin-password').value = '';
+                }
+            } catch (error) {
+                errorElement.textContent = '登入失敗：' + error.message;
+                errorElement.style.display = 'block';
+            }
+        }
+
+        // 登出
+        function logout() {
+            sessionStorage.removeItem(ADMIN_SESSION_KEY);
+            isLoggedIn = false;
+            isAdminMode = false;
+            toggleAdminPanel();
+            Swal.fire('已登出', '您已成功登出後台', 'info');
+        }
 
         // 檢查是否為管理模式
         function checkAdminMode() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('admin') === 'true') {
-                isAdminMode = true;
-                toggleAdminPanel();
+                if (checkLoginStatus()) {
+                    isAdminMode = true;
+                    toggleAdminPanel();
+                } else {
+                    showLoginModal();
+                }
             }
         }
 
         // 切換後台面板
         function toggleAdminPanel() {
+            if (!isLoggedIn && !checkLoginStatus()) {
+                showLoginModal();
+                return;
+            }
+
             const adminPanel = document.getElementById('admin-panel');
             const orderForm = document.getElementById('order-form');
             const adminToggle = document.getElementById('admin-toggle');
@@ -312,8 +431,20 @@
             container.innerHTML = html;
         }
 
+        // 檢查是否已登入（用於後台操作）
+        function checkAuth() {
+            if (!checkLoginStatus()) {
+                Swal.fire('錯誤', '請先登入後台', 'error');
+                showLoginModal();
+                return false;
+            }
+            return true;
+        }
+
         // 新增品項
         async function addItem() {
+            if (!checkAuth()) return;
+            
             const category = document.getElementById('new-category').value.trim();
             const name = document.getElementById('new-item').value.trim();
             const price = document.getElementById('new-price').value.trim();
@@ -330,8 +461,9 @@
             }
 
             try {
+                const session = JSON.parse(sessionStorage.getItem(ADMIN_SESSION_KEY));
                 const timestamp = new Date().getTime();
-                const response = await fetch(`${GAS_URL}?action=addItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&category=${encodeURIComponent(category)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&_t=${timestamp}`, {
+                const response = await fetch(`${GAS_URL}?action=addItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&category=${encodeURIComponent(category)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&token=${encodeURIComponent(session.token)}&_t=${timestamp}`, {
                     method: 'GET',
                     cache: 'no-cache',
                     headers: {
@@ -381,10 +513,13 @@
             });
 
             if (formValues) {
+                if (!checkAuth()) return;
+                
                 const sheetsUrl = localStorage.getItem(SHEETS_URL_KEY);
                 try {
+                    const session = JSON.parse(sessionStorage.getItem(ADMIN_SESSION_KEY));
                     const timestamp = new Date().getTime();
-                    const response = await fetch(`${GAS_URL}?action=updateItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&id=${encodeURIComponent(itemId)}&category=${encodeURIComponent(formValues.category)}&name=${encodeURIComponent(formValues.name)}&price=${encodeURIComponent(formValues.price)}&_t=${timestamp}`, {
+                    const response = await fetch(`${GAS_URL}?action=updateItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&id=${encodeURIComponent(itemId)}&category=${encodeURIComponent(formValues.category)}&name=${encodeURIComponent(formValues.name)}&price=${encodeURIComponent(formValues.price)}&token=${encodeURIComponent(session.token)}&_t=${timestamp}`, {
                         method: 'GET',
                         cache: 'no-cache',
                         headers: {
@@ -418,10 +553,13 @@
             });
 
             if (result.isConfirmed) {
+                if (!checkAuth()) return;
+                
                 const sheetsUrl = localStorage.getItem(SHEETS_URL_KEY);
                 try {
+                    const session = JSON.parse(sessionStorage.getItem(ADMIN_SESSION_KEY));
                     const timestamp = new Date().getTime();
-                    const response = await fetch(`${GAS_URL}?action=deleteItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&id=${encodeURIComponent(itemId)}&_t=${timestamp}`, {
+                    const response = await fetch(`${GAS_URL}?action=deleteItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&id=${encodeURIComponent(itemId)}&token=${encodeURIComponent(session.token)}&_t=${timestamp}`, {
                         method: 'GET',
                         cache: 'no-cache',
                         headers: {
