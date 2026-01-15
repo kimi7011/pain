@@ -159,13 +159,17 @@
         </div>
 
         <!-- 標籤頁 -->
-        <div class="flex gap-2 mb-6 items-center">
+        <div class="flex gap-2 mb-6 items-center flex-wrap">
             <button onclick="showTab('products')" id="tab-products" class="px-6 py-3 rounded-lg font-medium tab-active">
                 商品管理
             </button>
             <button onclick="showTab('orders')" id="tab-orders"
                 class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
                 訂單查看
+            </button>
+            <button onclick="showTab('settings')" id="tab-settings"
+                class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
+                店家設定
             </button>
             <div class="flex-grow"></div>
             <button onclick="openCategoryManager()"
@@ -185,11 +189,14 @@
                 <table class="w-full">
                     <thead>
                         <tr class="border-b-2 border-amber-200">
+                            <th class="p-3 text-center"><input type="checkbox" id="select-all"
+                                    onchange="toggleSelectAll(this)" class="w-4 h-4 accent-amber-600"></th>
                             <th class="text-left p-3 text-amber-800">分類</th>
                             <th class="text-left p-3 text-amber-800">品名</th>
                             <th class="text-right p-3 text-amber-800">價格</th>
                             <th class="text-left p-3 text-amber-800">備註</th>
                             <th class="text-center p-3 text-amber-800">狀態</th>
+                            <th class="text-center p-3 text-amber-800">排序</th>
                             <th class="text-center p-3 text-amber-800">操作</th>
                         </tr>
                     </thead>
@@ -209,12 +216,115 @@
                 <p class="text-center py-8 text-gray-500">載入中...</p>
             </div>
         </div>
+
+        <!-- 店家設定區 -->
+        <div id="settings-section" class="glass-card p-6 hidden">
+            <h2 class="text-xl font-bold text-amber-800 mb-6">店家設定</h2>
+
+            <!-- 營業狀態 -->
+            <div class="mb-8 p-4 bg-white rounded-lg border border-gray-200">
+                <h3 class="text-lg font-semibold text-amber-700 mb-4">📍 營業狀態</h3>
+                <div class="flex gap-4 mb-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="is_open" value="auto" class="w-4 h-4 accent-amber-600"
+                            onchange="saveSettingsDebounced()">
+                        <span>依營業時間自動</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="is_open" value="open" class="w-4 h-4 accent-green-600"
+                            onchange="saveSettingsDebounced()">
+                        <span class="text-green-600 font-medium">強制營業中</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="is_open" value="closed" class="w-4 h-4 accent-red-600"
+                            onchange="saveSettingsDebounced()">
+                        <span class="text-red-600 font-medium">強制休息中</span>
+                    </label>
+                </div>
+                <p id="current-status" class="text-sm text-gray-500"></p>
+            </div>
+
+            <!-- 營業時間 -->
+            <div class="mb-8 p-4 bg-white rounded-lg border border-gray-200">
+                <h3 class="text-lg font-semibold text-amber-700 mb-4">⏰ 營業時間</h3>
+                <div class="flex items-center gap-4 mb-4">
+                    <label class="flex items-center gap-2">
+                        <span>開始</span>
+                        <input type="time" id="business_hours_start" class="px-3 py-2 border rounded-lg"
+                            onchange="saveSettingsDebounced()">
+                    </label>
+                    <span>~</span>
+                    <label class="flex items-center gap-2">
+                        <span>結束</span>
+                        <input type="time" id="business_hours_end" class="px-3 py-2 border rounded-lg"
+                            onchange="saveSettingsDebounced()">
+                    </label>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <span class="text-sm text-gray-600 mr-2">營業日：</span>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="0"
+                            class="business-day accent-amber-600"
+                            onchange="saveSettingsDebounced()"><span>日</span></label>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="1"
+                            class="business-day accent-amber-600"
+                            onchange="saveSettingsDebounced()"><span>一</span></label>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="2"
+                            class="business-day accent-amber-600"
+                            onchange="saveSettingsDebounced()"><span>二</span></label>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="3"
+                            class="business-day accent-amber-600"
+                            onchange="saveSettingsDebounced()"><span>三</span></label>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="4"
+                            class="business-day accent-amber-600"
+                            onchange="saveSettingsDebounced()"><span>四</span></label>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="5"
+                            class="business-day accent-amber-600"
+                            onchange="saveSettingsDebounced()"><span>五</span></label>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" value="6"
+                            class="business-day accent-amber-600"
+                            onchange="saveSettingsDebounced()"><span>六</span></label>
+                </div>
+            </div>
+
+            <!-- 公告設定 -->
+            <div class="mb-8 p-4 bg-white rounded-lg border border-gray-200">
+                <h3 class="text-lg font-semibold text-amber-700 mb-4">📢 公告設定</h3>
+                <div class="flex items-center gap-4 mb-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="announcement_enabled" class="w-4 h-4 accent-amber-600"
+                            onchange="saveSettingsDebounced()">
+                        <span>啟用公告</span>
+                    </label>
+                </div>
+                <textarea id="announcement" class="w-full p-3 border rounded-lg resize-none" rows="3"
+                    placeholder="輸入要顯示在點餐頁面頂部的公告內容..." onblur="saveSettingsDebounced()"></textarea>
+                <p class="text-sm text-gray-500 mt-2">公告會顯示在點餐頁面的最上方，可用於公布寄送日期、活動通知等。</p>
+            </div>
+
+            <div class="text-center">
+                <button onclick="saveSettings()" class="btn-primary">儲存設定</button>
+            </div>
+        </div>
+
         <div class="content-spacer"></div>
     </div>
 
     <!-- 底部固定欄 -->
     <div class="bottom-bar hidden">
-        <div class="w-full max-w-6xl mx-auto flex justify-end">
+        <div class="w-full max-w-6xl mx-auto flex justify-between items-center gap-4">
+            <!-- 批次操作區 -->
+            <div id="batch-bar" class="hidden flex items-center gap-3">
+                <span id="batch-count" class="text-amber-800 font-medium"></span>
+                <button onclick="batchEnable()"
+                    class="px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-sm">批次啟用</button>
+                <button onclick="batchDisable()"
+                    class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">批次停用</button>
+                <button onclick="batchAdjustPrice()"
+                    class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm">批次調價</button>
+                <button onclick="clearSelection()"
+                    class="px-3 py-2 text-gray-500 hover:text-gray-700 text-sm">取消選取</button>
+            </div>
+            <div class="flex-grow"></div>
             <button id="btn-add-product" onclick="showAddProductModal()" class="btn-primary">
                 + 新增商品
             </button>
@@ -335,7 +445,7 @@
         // ==========================================
 
         // 1. Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxg7Gc9marHFe3LVFW1YRrzFT3yVW2xsTIPWe6-M0UvIXOS2m1pHCwIEc9XuzgBOLzv2w/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxNi_5gF0FX3J0Ai_uUAiiOq4pC_86lnf_7SM3sjPOP9un32pr3l2U7PvnSrfLvoUaZhA/exec';
 
         // 2. LINE Login 設定 (必填)
         const LINE_LOGIN_CHANNEL_ID = '2008902569';
@@ -475,11 +585,15 @@
         }
 
         function showTab(tab) {
-            const tabs = ['products', 'orders'];
+            const tabs = ['products', 'orders', 'settings'];
             tabs.forEach(t => {
-                document.getElementById(`tab-${t}`).classList.remove('tab-active');
-                document.getElementById(`tab-${t}`).classList.add('bg-white', 'text-gray-600');
-                document.getElementById(`${t}-section`).classList.add('hidden');
+                const tabBtn = document.getElementById(`tab-${t}`);
+                const section = document.getElementById(`${t}-section`);
+                if (tabBtn) {
+                    tabBtn.classList.remove('tab-active');
+                    tabBtn.classList.add('bg-white', 'text-gray-600');
+                }
+                if (section) section.classList.add('hidden');
             });
 
             document.getElementById(`tab-${tab}`).classList.add('tab-active');
@@ -498,6 +612,8 @@
 
             if (tab === 'orders') {
                 loadOrders();
+            } else if (tab === 'settings') {
+                loadSettings();
             }
         }
 
@@ -730,7 +846,8 @@
             const tbody = document.getElementById('products-table');
 
             if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">尚無商品</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">尚無商品</td></tr>';
+                updateBatchBar();
                 return;
             }
 
@@ -746,7 +863,6 @@
             const sortedCategories = Object.keys(grouped).sort((a, b) => {
                 const indexA = categoryOrder.indexOf(a);
                 const indexB = categoryOrder.indexOf(b);
-                // 如果分類不在 categories 中，放到最後
                 if (indexA === -1) return 1;
                 if (indexB === -1) return -1;
                 return indexA - indexB;
@@ -755,12 +871,20 @@
             let html = '';
             sortedCategories.forEach(category => {
                 const items = grouped[category];
-                items.forEach(p => {
+                // 依 sortOrder 排序
+                items.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+                items.forEach((p, index) => {
                     const statusClass = p.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
                     const statusText = p.enabled ? '啟用' : '停用';
+                    const isFirst = index === 0;
+                    const isLast = index === items.length - 1;
 
                     html += `
-                        <tr class="product-row border-b border-gray-100">
+                        <tr class="product-row border-b border-gray-100" data-id="${p.id}">
+                            <td class="p-3 text-center">
+                                <input type="checkbox" class="product-checkbox w-4 h-4 accent-amber-600" value="${p.id}" onchange="updateBatchBar()">
+                            </td>
                             <td class="p-3 text-gray-600 cursor-pointer hover:bg-amber-50 rounded" 
                                 onclick="editCategory(this, ${p.id}, '${p.category.replace(/'/g, "\\'")}')" 
                                 title="點擊修改分類">
@@ -788,6 +912,14 @@
                                     ${statusText}
                                 </span>
                             </td>
+                            <td class="p-3 text-center whitespace-nowrap">
+                                <button onclick="moveProduct(${p.id}, 'up')" 
+                                    class="w-6 h-6 text-gray-400 hover:text-amber-600 ${isFirst ? 'opacity-30 cursor-not-allowed' : ''}" 
+                                    ${isFirst ? 'disabled' : ''} title="上移">▲</button>
+                                <button onclick="moveProduct(${p.id}, 'down')" 
+                                    class="w-6 h-6 text-gray-400 hover:text-amber-600 ${isLast ? 'opacity-30 cursor-not-allowed' : ''}" 
+                                    ${isLast ? 'disabled' : ''} title="下移">▼</button>
+                            </td>
                             <td class="p-3 text-center">
                                 <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 mr-2">編輯</button>
                                 <button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700">刪除</button>
@@ -797,6 +929,7 @@
             });
 
             tbody.innerHTML = html;
+            updateBatchBar();
         }
 
         // ---- 直覺編輯功能 ----
@@ -1296,6 +1429,231 @@
                 }
             } catch (error) {
                 Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        // ============ 店家設定功能 ============
+        let storeSettings = {};
+        let saveSettingsTimer = null;
+
+        async function loadSettings() {
+            try {
+                const response = await fetch(`${GAS_URL}?action=getSettings`);
+                const result = await response.json();
+                if (result.success) {
+                    storeSettings = result.settings;
+                    populateSettingsForm();
+                }
+            } catch (error) {
+                console.error('載入設定失敗', error);
+            }
+        }
+
+        function populateSettingsForm() {
+            // 營業狀態
+            const isOpenRadios = document.querySelectorAll('input[name="is_open"]');
+            isOpenRadios.forEach(radio => {
+                radio.checked = radio.value === (storeSettings.is_open || 'auto');
+            });
+
+            // 更新當前狀態顯示
+            const statusText = storeSettings.currentlyOpen ? '🟢 目前營業中' : '🔴 目前休息中';
+            document.getElementById('current-status').textContent =
+                `${statusText}（現在時間：${storeSettings.currentTime}）`;
+
+            // 營業時間
+            document.getElementById('business_hours_start').value = storeSettings.business_hours_start || '09:00';
+            document.getElementById('business_hours_end').value = storeSettings.business_hours_end || '21:00';
+
+            // 營業日
+            const businessDays = (storeSettings.business_days || '1,2,3,4,5,6').split(',').map(d => d.trim());
+            document.querySelectorAll('.business-day').forEach(cb => {
+                cb.checked = businessDays.includes(cb.value);
+            });
+
+            // 公告
+            document.getElementById('announcement_enabled').checked = storeSettings.announcement_enabled === 'true';
+            document.getElementById('announcement').value = storeSettings.announcement || '';
+        }
+
+        function saveSettingsDebounced() {
+            // 防抖：500ms 內只執行一次
+            clearTimeout(saveSettingsTimer);
+            saveSettingsTimer = setTimeout(() => saveSettings(true), 500);
+        }
+
+        async function saveSettings(silent = false) {
+            // 收集表單資料
+            const isOpen = document.querySelector('input[name="is_open"]:checked')?.value || 'auto';
+            const businessHoursStart = document.getElementById('business_hours_start').value;
+            const businessHoursEnd = document.getElementById('business_hours_end').value;
+
+            const businessDays = [];
+            document.querySelectorAll('.business-day:checked').forEach(cb => {
+                businessDays.push(cb.value);
+            });
+
+            const announcementEnabled = document.getElementById('announcement_enabled').checked;
+            const announcement = document.getElementById('announcement').value;
+
+            const settings = {
+                is_open: isOpen,
+                business_hours_start: businessHoursStart,
+                business_hours_end: businessHoursEnd,
+                business_days: businessDays.join(','),
+                announcement_enabled: String(announcementEnabled),
+                announcement: announcement
+            };
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=updateSettings`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        settings: settings
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    if (!silent) {
+                        Toast.fire({ icon: 'success', title: '設定已儲存' });
+                    }
+                    // 重新載入設定以更新狀態顯示
+                    loadSettings();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('儲存失敗', error.message, 'error');
+            }
+        }
+
+        // ============ 批次編輯功能 ============
+
+        function toggleSelectAll(checkbox) {
+            const allCheckboxes = document.querySelectorAll('.product-checkbox');
+            allCheckboxes.forEach(cb => cb.checked = checkbox.checked);
+            updateBatchBar();
+        }
+
+        function getSelectedProductIds() {
+            const selected = [];
+            document.querySelectorAll('.product-checkbox:checked').forEach(cb => {
+                selected.push(parseInt(cb.value));
+            });
+            return selected;
+        }
+
+        function updateBatchBar() {
+            const selected = getSelectedProductIds();
+            const batchBar = document.getElementById('batch-bar');
+            const batchCount = document.getElementById('batch-count');
+
+            if (selected.length > 0) {
+                batchBar.classList.remove('hidden');
+                batchBar.classList.add('flex');
+                batchCount.textContent = `已選取 ${selected.length} 項`;
+            } else {
+                batchBar.classList.add('hidden');
+                batchBar.classList.remove('flex');
+            }
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.product-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('select-all').checked = false;
+            updateBatchBar();
+        }
+
+        async function batchEnable() {
+            const ids = getSelectedProductIds();
+            if (ids.length === 0) return;
+            await batchUpdate('enable', ids);
+        }
+
+        async function batchDisable() {
+            const ids = getSelectedProductIds();
+            if (ids.length === 0) return;
+            await batchUpdate('disable', ids);
+        }
+
+        async function batchAdjustPrice() {
+            const ids = getSelectedProductIds();
+            if (ids.length === 0) return;
+
+            const { value: adjustment } = await Swal.fire({
+                title: '批次調價',
+                html: `
+                    <p class="text-sm text-gray-600 mb-4">正數為加價，負數為減價</p>
+                    <input type="number" id="price-adjustment" class="swal2-input" placeholder="例如: 10 或 -5">
+                `,
+                showCancelButton: true,
+                confirmButtonText: '確定調價',
+                cancelButtonText: '取消',
+                preConfirm: () => {
+                    const val = document.getElementById('price-adjustment').value;
+                    if (!val || isNaN(parseInt(val))) {
+                        Swal.showValidationMessage('請輸入有效的數字');
+                        return false;
+                    }
+                    return parseInt(val);
+                }
+            });
+
+            if (adjustment !== undefined) {
+                await batchUpdate('adjustPrice', ids, adjustment);
+            }
+        }
+
+        async function batchUpdate(action, productIds, priceAdjustment = 0) {
+            try {
+                Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${GAS_URL}?action=batchUpdateProducts`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        action: action,
+                        productIds: productIds,
+                        priceAdjustment: priceAdjustment
+                    })
+                });
+                const result = await response.json();
+                Swal.close();
+
+                if (result.success) {
+                    Toast.fire({ icon: 'success', title: result.message });
+                    clearSelection();
+                    loadProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('操作失敗', error.message, 'error');
+            }
+        }
+
+        // ============ 商品排序功能 ============
+
+        async function moveProduct(id, direction) {
+            try {
+                const response = await fetch(`${GAS_URL}?action=reorderProduct`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        id: id,
+                        direction: direction
+                    })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    loadProducts();
+                } else {
+                    console.error(result.error);
+                }
+            } catch (error) {
+                console.error(error);
             }
         }
 
