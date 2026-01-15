@@ -244,7 +244,7 @@
     <script>
         // ============ 設定 ============
         // TODO: 部署 Apps Script 後，將 URL 更新到這裡
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbw87FdNqOwzoZuR9crNG0BbkTQKTCF1kYvj0seUVRXBScrn0kx6jxjkTSJ9CJ5OzBUKew/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbx0fIaD6KpZF1MFjk5czd1QolTkJqLhOp5QdaW8ot6zTC7T9z6CZR6KWodV0Ger-L6j5A/exec';
 
         // LINE Login 設定
         // TODO: 建立 LINE Login Channel 後，將 Channel ID 更新到這裡
@@ -308,32 +308,31 @@
             });
 
             try {
-                // 注意：由於 CORS 限制，LINE Token 交換需要在後端進行
-                // 這裡使用簡化的模擬流程，實際部署時需要透過 Apps Script 處理
-
-                // 暫時使用模擬資料進行測試
-                // 實際上需要：1. 用 code 換取 access_token  2. 用 token 取得用戶資料
-
-                Swal.fire({
-                    icon: 'info',
-                    title: 'LINE Login 設定',
-                    html: `
-                        <p>LINE Login 需要額外設定才能完成。</p>
-                        <br>
-                        <p>請先完成以下步驟：</p>
-                        <ol class="text-left">
-                            <li>1. 在 LINE Developers 建立 LINE Login Channel</li>
-                            <li>2. 更新 admin.html 中的 Channel ID</li>
-                            <li>3. 更新 Apps Script 以處理 Token 交換</li>
-                        </ol>
-                    `,
-                    confirmButtonText: '我知道了'
-                });
+                // 透過 Apps Script 後端處理 Token 交換
+                const response = await fetch(`${GAS_URL}?action=lineLogin&code=${encodeURIComponent(code)}`);
+                const result = await response.json();
 
                 // 清除 URL 參數
                 window.history.replaceState({}, document.title, 'admin.html');
 
+                if (result.success && result.isAdmin) {
+                    // 登入成功
+                    currentUser = result.user;
+                    sessionStorage.setItem('admin_user', JSON.stringify(currentUser));
+                    Swal.close();
+                    showAdminPage();
+                } else {
+                    // 登入失敗
+                    Swal.fire({
+                        icon: 'error',
+                        title: '登入失敗',
+                        text: result.error || '您沒有管理員權限',
+                        confirmButtonText: '確定'
+                    });
+                }
             } catch (error) {
+                // 清除 URL 參數
+                window.history.replaceState({}, document.title, 'admin.html');
                 Swal.fire('錯誤', '登入失敗：' + error.message, 'error');
             }
         }
