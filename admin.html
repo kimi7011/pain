@@ -96,6 +96,29 @@
         .hidden {
             display: none !important;
         }
+
+        /* 底部固定欄 */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 24px;
+            box-shadow: 0 -4px 20px rgba(139, 90, 43, 0.1);
+            display: flex;
+            justify-content: flex-end;
+            /* 預設靠右 */
+            align-items: center;
+            z-index: 50;
+            border-top: 1px solid rgba(139, 90, 43, 0.2);
+        }
+
+        /* 預留底部空間給固定欄 */
+        .content-spacer {
+            height: 80px;
+        }
     </style>
 </head>
 
@@ -136,7 +159,7 @@
         </div>
 
         <!-- 標籤頁 -->
-        <div class="flex gap-2 mb-6">
+        <div class="flex gap-2 mb-6 items-center">
             <button onclick="showTab('products')" id="tab-products" class="px-6 py-3 rounded-lg font-medium tab-active">
                 商品管理
             </button>
@@ -144,15 +167,17 @@
                 class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
                 訂單查看
             </button>
+            <div class="flex-grow"></div>
+            <button onclick="openCategoryManager()"
+                class="px-4 py-2 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 transition text-sm font-medium">
+                ⚙️ 管理分類
+            </button>
         </div>
 
         <!-- 商品管理區 -->
         <div id="products-section" class="glass-card p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-amber-800">商品列表</h2>
-                <button onclick="showAddProductModal()" class="btn-primary">
-                    + 新增商品
-                </button>
             </div>
 
             <!-- 商品表格 -->
@@ -184,6 +209,16 @@
                 <p class="text-center py-8 text-gray-500">載入中...</p>
             </div>
         </div>
+        <div class="content-spacer"></div>
+    </div>
+
+    <!-- 底部固定欄 -->
+    <div class="bottom-bar">
+        <div class="w-full max-w-6xl mx-auto flex justify-end">
+            <button id="btn-add-product" onclick="showAddProductModal()" class="btn-primary">
+                + 新增商品
+            </button>
+        </div>
     </div>
 
     <!-- ============ 新增/編輯商品 Modal ============ -->
@@ -196,15 +231,7 @@
                 <div class="mb-4">
                     <label class="block text-gray-700 mb-2">分類 *</label>
                     <select id="product-category" class="w-full border rounded-lg p-3" required>
-                        <option value="">請選擇分類</option>
-                        <option value="菓子類(甜麵包)">菓子類(甜麵包)</option>
-                        <option value="鹹麵包">鹹麵包</option>
-                        <option value="吐司類&餐包類">吐司類&餐包類</option>
-                        <option value="多拿滋">多拿滋</option>
-                        <option value="可頌類">可頌類</option>
-                        <option value="歐式麵包">歐式麵包</option>
-                        <option value="法國類">法國類</option>
-                        <option value="甜點類">甜點類</option>
+                        <option value="">載入中...</option>
                     </select>
                 </div>
 
@@ -241,13 +268,74 @@
         </div>
     </div>
 
+    <!-- ============ 編輯訂單 Modal ============ -->
+    <div id="order-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold text-amber-800 mb-6">修改訂單</h3>
+            <form id="order-form" onsubmit="saveOrder(event)">
+                <input type="hidden" id="order-id">
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">顧客姓名</label>
+                    <input type="text" id="order-name" class="w-full border rounded-lg p-3" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">聯絡電話</label>
+                    <input type="tel" id="order-phone" class="w-full border rounded-lg p-3" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">訂單內容</label>
+                    <textarea id="order-items" class="w-full border rounded-lg p-3" rows="6" required></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">總金額</label>
+                    <input type="number" id="order-total" class="w-full border rounded-lg p-3" required min="0">
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" class="btn-primary flex-1">儲存</button>
+                    <button type="button" onclick="closeOrderModal()"
+                        class="flex-1 px-6 py-3 bg-gray-200 rounded-lg">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============ 分類管理 Modal ============ -->
+    <div id="category-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-lg">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-amber-800">分類管理</h3>
+                <button onclick="closeCategoryManager()" class="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+
+            <div class="mb-4 flex gap-2">
+                <input type="text" id="new-category-name" class="flex-grow border rounded-lg p-2"
+                    placeholder="輸入新分類名稱...">
+                <button onclick="addNewCategory()"
+                    class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700">新增</button>
+            </div>
+
+            <div id="category-list" class="max-h-60 overflow-y-auto mb-4">
+                <!-- 分類列表 -->
+            </div>
+
+            <div class="text-right">
+                <button onclick="closeCategoryManager()" class="px-6 py-2 bg-gray-200 rounded-lg">關閉</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==========================================
         //              系統設定區 (請修改此處)
         // ==========================================
 
         // 1. Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzBjMrSZNLiqaTf90qvBC6oxB18CG--atfHzk9uU4je0z0ef1hDbZtdhVlLkYOl335VmA/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxKXXjb20D6UhXsf9u0Pr0oa3x-mIUuiRQ_IkHbSoyS_6iE6OeEVfTlFK0SIeje42JW6Q/exec';
 
         // 2. LINE Login 設定 (必填)
         const LINE_LOGIN_CHANNEL_ID = '2008902569';
@@ -262,7 +350,9 @@
 
         // 狀態
         let currentUser = null;
+        let categories = [];
         let products = [];
+        let orders = [];
 
         // ============ 初始化 ============
         document.addEventListener('DOMContentLoaded', () => {
@@ -376,6 +466,7 @@
             document.getElementById('login-page').classList.add('hidden');
             document.getElementById('admin-page').classList.remove('hidden');
             document.getElementById('admin-name').textContent = currentUser.displayName || '管理員';
+            loadCategories(); // 先載入分類
             loadProducts();
         }
 
@@ -391,8 +482,173 @@
             document.getElementById(`tab-${tab}`).classList.remove('bg-white', 'text-gray-600');
             document.getElementById(`${tab}-section`).classList.remove('hidden');
 
+            // Toggle bottom bar visibility
+            const bottomBar = document.querySelector('.bottom-bar');
+            if (bottomBar) {
+                if (tab === 'products') {
+                    bottomBar.classList.remove('hidden');
+                } else {
+                    bottomBar.classList.add('hidden');
+                }
+            }
+
             if (tab === 'orders') {
                 loadOrders();
+            }
+        }
+
+        // ============ 分類管理 ============
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${GAS_URL}?action=getCategories`);
+                const result = await response.json();
+                if (result.success) {
+                    categories = result.categories;
+                    renderCategoryOptions();
+                } else {
+                    console.error('分類載入失敗', result.error);
+                }
+            } catch (error) {
+                console.error('分類載入錯誤', error);
+            }
+        }
+
+        function renderCategoryOptions() {
+            const select = document.getElementById('product-category');
+            select.innerHTML = '<option value="">請選擇分類</option>';
+            categories.forEach(cat => {
+                select.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
+            });
+        }
+
+        function openCategoryManager() {
+            renderCategoryManager();
+            document.getElementById('category-modal').classList.remove('hidden');
+        }
+
+        function closeCategoryManager() {
+            document.getElementById('category-modal').classList.add('hidden');
+        }
+
+        function renderCategoryManager() {
+            const list = document.getElementById('category-list');
+            if (categories.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-center py-4">尚無分類</p>';
+                return;
+            }
+
+            let html = '<div class="flex flex-col gap-2">';
+            categories.forEach(cat => {
+                html += `
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <span class="font-medium text-gray-700">${cat.name}</span>
+                        <div class="flex gap-2">
+                            <button onclick="editCategoryName(${cat.id}, '${cat.name}')" class="text-blue-500 hover:text-blue-700 text-sm">編輯</button>
+                            <button onclick="deleteCategory(${cat.id})" class="text-red-500 hover:text-red-700 text-sm">刪除</button>
+                        </div>
+                    </div>`;
+            });
+            html += '</div>';
+            list.innerHTML = html;
+        }
+
+        async function addNewCategory() {
+            const input = document.getElementById('new-category-name');
+            const name = input.value.trim();
+            if (!name) return;
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=addCategory`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        name: name
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    Toast.fire({ icon: 'success', title: '新增成功' });
+                    input.value = '';
+                    loadCategories().then(() => renderCategoryManager());
+                } else {
+                    Swal.fire('錯誤', result.error, 'error');
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        async function editCategoryName(id, oldName) {
+            const { value: newName } = await Swal.fire({
+                title: '修改分類名稱',
+                input: 'text',
+                inputValue: oldName,
+                showCancelButton: true,
+                confirmButtonText: '更新',
+                cancelButtonText: '取消',
+                inputValidator: (value) => {
+                    if (!value) return '請輸入分類名稱！';
+                }
+            });
+
+            if (newName && newName !== oldName) {
+                try {
+                    Swal.showLoading();
+                    const response = await fetch(`${GAS_URL}?action=updateCategory`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            userId: currentUser?.userId || ADMIN_USER_ID,
+                            id: id,
+                            name: newName
+                        })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        Swal.fire('成功', '分類已更新', 'success');
+                        loadCategories().then(() => {
+                            renderCategoryManager();
+                            loadProducts(); // 重新載入商品以更新顯示
+                        });
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    Swal.fire('錯誤', error.message, 'error');
+                }
+            }
+        }
+
+        async function deleteCategory(id) {
+            const result = await Swal.fire({
+                title: '刪除此分類？',
+                text: '注意：刪除後，屬於此分類的商品將需要重新分類',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: '刪除',
+                cancelButtonText: '取消'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=deleteCategory`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        id: id
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('成功', '分類已刪除', 'success');
+                    loadCategories().then(() => renderCategoryManager());
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
             }
         }
 
@@ -700,7 +956,8 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    renderOrders(result.orders);
+                    orders = result.orders;
+                    renderOrders();
                 } else {
                     throw new Error(result.error);
                 }
@@ -709,7 +966,7 @@
             }
         }
 
-        function renderOrders(orders) {
+        function renderOrders() {
             const ordersList = document.getElementById('orders-list');
 
             if (!orders || orders.length === 0) {
@@ -734,12 +991,101 @@
                         <div class="text-gray-600">
                             <p><span class="font-medium">顧客：</span>${order.lineName}</p>
                             <p><span class="font-medium">電話：</span>${order.phone}</p>
-                            <p class="mt-2 text-sm whitespace-pre-line">${order.items}</p>
+                            <p class="mt-2 text-sm whitespace-pre-line bg-gray-50 p-3 rounded">${order.items}</p>
+                        </div>
+                        <div class="mt-3 flex justify-end gap-3">
+                            <button onclick="editOrder('${order.orderId}')" class="text-blue-500 hover:text-blue-700 font-medium">編輯</button>
+                            <button onclick="deleteOrder('${order.orderId}')" class="text-red-500 hover:text-red-700 font-medium">刪除</button>
                         </div>
                     </div>`;
             });
 
             ordersList.innerHTML = html;
+        }
+
+        function editOrder(orderId) {
+            const order = orders.find(o => o.orderId == orderId); // 注意 ID 類型可能是字串
+            if (!order) return;
+
+            document.getElementById('order-id').value = order.orderId;
+            document.getElementById('order-name').value = order.lineName;
+            document.getElementById('order-phone').value = order.phone;
+            document.getElementById('order-items').value = order.items;
+            document.getElementById('order-total').value = order.total;
+
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('order-modal').classList.add('hidden');
+        }
+
+        async function saveOrder(event) {
+            event.preventDefault();
+
+            const orderId = document.getElementById('order-id').value;
+            const data = {
+                userId: currentUser?.userId || ADMIN_USER_ID,
+                orderId: orderId,
+                lineName: document.getElementById('order-name').value,
+                phone: document.getElementById('order-phone').value,
+                items: document.getElementById('order-items').value,
+                total: document.getElementById('order-total').value
+            };
+
+            try {
+                Swal.fire({ title: '更新中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${GAS_URL}?action=updateOrder`, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire('成功', '訂單已更新', 'success');
+                    closeOrderModal();
+                    loadOrders();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        async function deleteOrder(orderId) {
+            const result = await Swal.fire({
+                title: '確認刪除此訂單？',
+                text: `訂單編號: #${orderId}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: '刪除',
+                cancelButtonText: '取消'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=deleteOrder`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        orderId: orderId
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('成功', '訂單已刪除', 'success');
+                    loadOrders(); // 重新載入列表
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
         }
 
         // ============ 測試用：模擬登入（正式環境請移除）============
