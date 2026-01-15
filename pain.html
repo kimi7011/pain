@@ -254,7 +254,7 @@
 
         function applyStoreSettings() {
             // 顯示公告
-            if (storeSettings.announcement_enabled === 'true' && storeSettings.announcement) {
+            if (String(storeSettings.announcement_enabled) === 'true' && storeSettings.announcement) {
                 document.getElementById('announcement-text').textContent = storeSettings.announcement;
                 document.getElementById('announcement-banner').classList.remove('hidden');
             }
