@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>揉PAin 後台管理</title>
+    <link rel="icon" type="image/png" href="pain.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #8B5A2B;
+            --primary-dark: #6B4423;
+            --secondary: #F5E6D3;
+            --accent: #D4A574;
+        }
+
+        body {
+            background: linear-gradient(135deg, #F5E6D3 0%, #E8D4C4 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(139, 90, 43, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5A2B 0%, #6B4423 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(139, 90, 43, 0.4);
+        }
+
+        .btn-line {
+            background: #00B900;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-line:hover {
+            background: #009900;
+            transform: translateY(-2px);
+        }
+
+        .product-row {
+            transition: all 0.2s ease;
+        }
+
+        .product-row:hover {
+            background: rgba(212, 165, 116, 0.1);
+        }
+
+        .tab-active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+    <!-- ============ 登入頁面 ============ -->
+    <div id="login-page" class="flex items-center justify-center min-h-screen">
+        <div class="glass-card p-8 text-center max-w-md w-full">
+            <div class="text-6xl mb-4">🍞</div>
+            <h1 class="text-3xl font-bold text-amber-800 mb-2">揉PAin</h1>
+            <p class="text-gray-600 mb-8">後台管理系統</p>
+
+            <button onclick="loginWithLine()" class="btn-line mx-auto">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12 2C6.48 2 2 5.82 2 10.5c0 4.13 3.67 7.6 8.62 8.35.34.07.79.22.91.5.11.26.07.66.03.92l-.15.9c-.04.26-.2 1.01.89.55s5.9-3.47 8.05-5.94C21.85 13.17 22 11.88 22 10.5 22 5.82 17.52 2 12 2z" />
+                </svg>
+                使用 LINE 登入
+            </button>
+
+            <p class="text-sm text-gray-500 mt-6">僅限授權管理員登入</p>
+        </div>
+    </div>
+
+    <!-- ============ 主要管理頁面 ============ -->
+    <div id="admin-page" class="hidden max-w-6xl mx-auto">
+        <!-- 頂部導航 -->
+        <div class="glass-card p-4 mb-6 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">🍞</span>
+                <div>
+                    <h1 class="text-xl font-bold text-amber-800">揉PAin 後台</h1>
+                    <p class="text-sm text-gray-500" id="admin-name">管理員</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="text-gray-500 hover:text-red-500 transition">
+                登出
+            </button>
+        </div>
+
+        <!-- 標籤頁 -->
+        <div class="flex gap-2 mb-6">
+            <button onclick="showTab('products')" id="tab-products" class="px-6 py-3 rounded-lg font-medium tab-active">
+                商品管理
+            </button>
+            <button onclick="showTab('orders')" id="tab-orders"
+                class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
+                訂單查看
+            </button>
+        </div>
+
+        <!-- 商品管理區 -->
+        <div id="products-section" class="glass-card p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-amber-800">商品列表</h2>
+                <button onclick="showAddProductModal()" class="btn-primary">
+                    + 新增商品
+                </button>
+            </div>
+
+            <!-- 商品表格 -->
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-amber-200">
+                            <th class="text-left p-3 text-amber-800">分類</th>
+                            <th class="text-left p-3 text-amber-800">品名</th>
+                            <th class="text-right p-3 text-amber-800">價格</th>
+                            <th class="text-left p-3 text-amber-800">備註</th>
+                            <th class="text-center p-3 text-amber-800">狀態</th>
+                            <th class="text-center p-3 text-amber-800">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table">
+                        <tr>
+                            <td colspan="6" class="text-center py-8 text-gray-500">載入中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 訂單查看區 -->
+        <div id="orders-section" class="glass-card p-6 hidden">
+            <h2 class="text-xl font-bold text-amber-800 mb-6">訂單列表</h2>
+            <div id="orders-list">
+                <p class="text-center py-8 text-gray-500">載入中...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ 新增/編輯商品 Modal ============ -->
+    <div id="product-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modal-title" class="text-xl font-bold text-amber-800 mb-6">新增商品</h3>
+            <form id="product-form" onsubmit="saveProduct(event)">
+                <input type="hidden" id="product-id">
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">分類 *</label>
+                    <select id="product-category" class="w-full border rounded-lg p-3" required>
+                        <option value="">請選擇分類</option>
+                        <option value="菓子類(甜麵包)">菓子類(甜麵包)</option>
+                        <option value="鹹麵包">鹹麵包</option>
+                        <option value="吐司類&餐包類">吐司類&餐包類</option>
+                        <option value="多拿滋">多拿滋</option>
+                        <option value="可頌類">可頌類</option>
+                        <option value="歐式麵包">歐式麵包</option>
+                        <option value="法國類">法國類</option>
+                        <option value="甜點類">甜點類</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">品名 *</label>
+                    <input type="text" id="product-name" class="w-full border rounded-lg p-3" required
+                        placeholder="請輸入品名">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">價格 *</label>
+                    <input type="number" id="product-price" class="w-full border rounded-lg p-3" required
+                        placeholder="請輸入價格" min="0">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">備註</label>
+                    <input type="text" id="product-note" class="w-full border rounded-lg p-3" placeholder="例：需冷藏、六日限定">
+                </div>
+
+                <div class="mb-6">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="product-enabled" checked class="w-5 h-5">
+                        <span class="text-gray-700">啟用販售</span>
+                    </label>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" class="btn-primary flex-1">儲存</button>
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 px-6 py-3 bg-gray-200 rounded-lg">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ============ 設定 ============
+        // TODO: 部署 Apps Script 後，將 URL 更新到這裡
+        const GAS_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+
+        // LINE Login 設定
+        // TODO: 建立 LINE Login Channel 後，將 Channel ID 更新到這裡
+        const LINE_LOGIN_CHANNEL_ID = 'YOUR_LINE_LOGIN_CHANNEL_ID';
+        const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/admin.html';
+        const ADMIN_USER_ID = 'U523fe140da9b40fff66ae287f6d4c547';
+
+        // 狀態
+        let currentUser = null;
+        let products = [];
+
+        // ============ 初始化 ============
+        document.addEventListener('DOMContentLoaded', () => {
+            // 檢查 URL 是否有 LINE Login 回傳的 code
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+
+            if (code) {
+                // 從 LINE Login 返回
+                handleLineCallback(code, state);
+            } else {
+                // 檢查是否已登入
+                checkLoginStatus();
+            }
+        });
+
+        // ============ LINE Login ============
+        function loginWithLine() {
+            const state = generateRandomState();
+            sessionStorage.setItem('line_login_state', state);
+
+            const authUrl = `https://access.line.me/oauth2/v2.1/authorize?` +
+                `response_type=code&` +
+                `client_id=${LINE_LOGIN_CHANNEL_ID}&` +
+                `redirect_uri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}&` +
+                `state=${state}&` +
+                `scope=profile%20openid`;
+
+            window.location.href = authUrl;
+        }
+
+        function generateRandomState() {
+            return Math.random().toString(36).substring(2, 15);
+        }
+
+        async function handleLineCallback(code, state) {
+            // 驗證 state
+            const savedState = sessionStorage.getItem('line_login_state');
+            if (state !== savedState) {
+                Swal.fire('錯誤', '登入驗證失敗，請重試', 'error');
+                window.location.href = 'admin.html';
+                return;
+            }
+
+            // 顯示載入中
+            Swal.fire({
+                title: '登入中...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                // 注意：由於 CORS 限制，LINE Token 交換需要在後端進行
+                // 這裡使用簡化的模擬流程，實際部署時需要透過 Apps Script 處理
+
+                // 暫時使用模擬資料進行測試
+                // 實際上需要：1. 用 code 換取 access_token  2. 用 token 取得用戶資料
+
+                Swal.fire({
+                    icon: 'info',
+                    title: 'LINE Login 設定',
+                    html: `
+                        <p>LINE Login 需要額外設定才能完成。</p>
+                        <br>
+                        <p>請先完成以下步驟：</p>
+                        <ol class="text-left">
+                            <li>1. 在 LINE Developers 建立 LINE Login Channel</li>
+                            <li>2. 更新 admin.html 中的 Channel ID</li>
+                            <li>3. 更新 Apps Script 以處理 Token 交換</li>
+                        </ol>
+                    `,
+                    confirmButtonText: '我知道了'
+                });
+
+                // 清除 URL 參數
+                window.history.replaceState({}, document.title, 'admin.html');
+
+            } catch (error) {
+                Swal.fire('錯誤', '登入失敗：' + error.message, 'error');
+            }
+        }
+
+        function checkLoginStatus() {
+            const savedUser = sessionStorage.getItem('admin_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showAdminPage();
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('admin_user');
+            currentUser = null;
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('admin-page').classList.add('hidden');
+        }
+
+        // ============ 頁面顯示 ============
+        function showAdminPage() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('admin-page').classList.remove('hidden');
+            document.getElementById('admin-name').textContent = currentUser.displayName || '管理員';
+            loadProducts();
+        }
+
+        function showTab(tab) {
+            const tabs = ['products', 'orders'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.remove('tab-active');
+                document.getElementById(`tab-${t}`).classList.add('bg-white', 'text-gray-600');
+                document.getElementById(`${t}-section`).classList.add('hidden');
+            });
+
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            document.getElementById(`tab-${tab}`).classList.remove('bg-white', 'text-gray-600');
+            document.getElementById(`${tab}-section`).classList.remove('hidden');
+
+            if (tab === 'orders') {
+                loadOrders();
+            }
+        }
+
+        // ============ 商品管理 ============
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${GAS_URL}?action=getProducts`);
+                const result = await response.json();
+
+                if (result.success) {
+                    products = result.products;
+                    renderProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('products-table').innerHTML = `
+                    <tr><td colspan="6" class="text-center py-8 text-red-500">
+                        載入失敗：${error.message}
+                    </td></tr>`;
+            }
+        }
+
+        function renderProducts() {
+            const tbody = document.getElementById('products-table');
+
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">尚無商品</td></tr>';
+                return;
+            }
+
+            // 依分類分組
+            const grouped = {};
+            products.forEach(p => {
+                if (!grouped[p.category]) grouped[p.category] = [];
+                grouped[p.category].push(p);
+            });
+
+            let html = '';
+            Object.entries(grouped).forEach(([category, items]) => {
+                items.forEach(p => {
+                    html += `
+                        <tr class="product-row border-b border-gray-100">
+                            <td class="p-3 text-gray-600">${p.category}</td>
+                            <td class="p-3 font-medium">${p.name}</td>
+                            <td class="p-3 text-right">$${p.price}</td>
+                            <td class="p-3 text-gray-500 text-sm">${p.note || '-'}</td>
+                            <td class="p-3 text-center">
+                                <span class="px-2 py-1 rounded text-xs ${p.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">
+                                    ${p.enabled ? '啟用' : '停用'}
+                                </span>
+                            </td>
+                            <td class="p-3 text-center">
+                                <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 mr-2">編輯</button>
+                                <button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700">刪除</button>
+                            </td>
+                        </tr>`;
+                });
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function showAddProductModal() {
+            document.getElementById('modal-title').textContent = '新增商品';
+            document.getElementById('product-id').value = '';
+            document.getElementById('product-form').reset();
+            document.getElementById('product-enabled').checked = true;
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id == id);
+            if (!product) return;
+
+            document.getElementById('modal-title').textContent = '編輯商品';
+            document.getElementById('product-id').value = product.id;
+            document.getElementById('product-category').value = product.category;
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-price').value = product.price;
+            document.getElementById('product-note').value = product.note || '';
+            document.getElementById('product-enabled').checked = product.enabled;
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        async function saveProduct(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('product-id').value;
+            const data = {
+                userId: currentUser?.userId || ADMIN_USER_ID,
+                id: id,
+                category: document.getElementById('product-category').value,
+                name: document.getElementById('product-name').value,
+                price: document.getElementById('product-price').value,
+                note: document.getElementById('product-note').value,
+                enabled: document.getElementById('product-enabled').checked
+            };
+
+            const action = id ? 'updateProduct' : 'addProduct';
+
+            try {
+                Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${GAS_URL}?action=${action}`, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire('成功', result.message, 'success');
+                    closeModal();
+                    loadProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        async function deleteProduct(id) {
+            const result = await Swal.fire({
+                title: '確認刪除？',
+                text: '此操作無法復原',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: '刪除',
+                cancelButtonText: '取消'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=deleteProduct`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        id: id
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('成功', '商品已刪除', 'success');
+                    loadProducts();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        // ============ 訂單管理 ============
+        async function loadOrders() {
+            const ordersList = document.getElementById('orders-list');
+            ordersList.innerHTML = '<p class="text-center py-8 text-gray-500">載入中...</p>';
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=getOrders&userId=${ADMIN_USER_ID}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    renderOrders(result.orders);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                ordersList.innerHTML = `<p class="text-center py-8 text-red-500">載入失敗：${error.message}</p>`;
+            }
+        }
+
+        function renderOrders(orders) {
+            const ordersList = document.getElementById('orders-list');
+
+            if (!orders || orders.length === 0) {
+                ordersList.innerHTML = '<p class="text-center py-8 text-gray-500">尚無訂單</p>';
+                return;
+            }
+
+            let html = '';
+            orders.forEach(order => {
+                const date = new Date(order.timestamp);
+                const dateStr = date.toLocaleString('zh-TW');
+
+                html += `
+                    <div class="border-b border-gray-100 py-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <span class="font-bold text-amber-800">#${order.orderId}</span>
+                                <span class="text-gray-500 text-sm ml-2">${dateStr}</span>
+                            </div>
+                            <span class="font-bold text-lg">$${order.total}</span>
+                        </div>
+                        <div class="text-gray-600">
+                            <p><span class="font-medium">顧客：</span>${order.lineName}</p>
+                            <p><span class="font-medium">電話：</span>${order.phone}</p>
+                            <p class="mt-2 text-sm whitespace-pre-line">${order.items}</p>
+                        </div>
+                    </div>`;
+            });
+
+            ordersList.innerHTML = html;
+        }
+
+        // ============ 測試用：模擬登入（正式環境請移除）============
+        // 開發階段可以使用此函數測試後台功能
+        function devLogin() {
+            currentUser = {
+                userId: ADMIN_USER_ID,
+                displayName: '測試管理員'
+            };
+            sessionStorage.setItem('admin_user', JSON.stringify(currentUser));
+            showAdminPage();
+        }
+    </script>
+</body>
+
+</html>
