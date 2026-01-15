@@ -244,7 +244,7 @@
     <script>
         // ============ 設定 ============
         // TODO: 部署 Apps Script 後，將 URL 更新到這裡
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbx0fIaD6KpZF1MFjk5czd1QolTkJqLhOp5QdaW8ot6zTC7T9z6CZR6KWodV0Ger-L6j5A/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzBjMrSZNLiqaTf90qvBC6oxB18CG--atfHzk9uU4je0z0ef1hDbZtdhVlLkYOl335VmA/exec';
 
         // LINE Login 設定
         // TODO: 建立 LINE Login Channel 後，將 Channel ID 更新到這裡
@@ -275,7 +275,7 @@
         // ============ LINE Login ============
         function loginWithLine() {
             const state = generateRandomState();
-            sessionStorage.setItem('line_login_state', state);
+            localStorage.setItem('line_login_state', state);
 
             const authUrl = `https://access.line.me/oauth2/v2.1/authorize?` +
                 `response_type=code&` +
@@ -292,17 +292,28 @@
         }
 
         async function handleLineCallback(code, state) {
-            // 驗證 state
-            const savedState = sessionStorage.getItem('line_login_state');
-            if (state !== savedState) {
-                Swal.fire('錯誤', '登入驗證失敗，請重試', 'error');
-                window.location.href = 'admin.html';
+            // 驗證 state (改用 localStorage 以避免 iOS 跨瀏覽器問題)
+            const savedState = localStorage.getItem('line_login_state');
+
+            // 清除用過的 state
+            localStorage.removeItem('line_login_state');
+
+            if (!savedState || state !== savedState) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '驗證失敗',
+                    text: `State 不符合 (Saved: ${savedState}, Returned: ${state})。請嘗試重新登入。`,
+                    confirmButtonText: '確定'
+                }).then(() => {
+                    window.location.href = 'admin.html';
+                });
                 return;
             }
 
             // 顯示載入中
             Swal.fire({
-                title: '登入中...',
+                title: '登入驗證中...',
+                text: '正在與伺服器交換金鑰',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
@@ -318,7 +329,7 @@
                 if (result.success && result.isAdmin) {
                     // 登入成功
                     currentUser = result.user;
-                    sessionStorage.setItem('admin_user', JSON.stringify(currentUser));
+                    localStorage.setItem('admin_user', JSON.stringify(currentUser));
                     Swal.close();
                     showAdminPage();
                 } else {
@@ -338,7 +349,7 @@
         }
 
         function checkLoginStatus() {
-            const savedUser = sessionStorage.getItem('admin_user');
+            const savedUser = localStorage.getItem('admin_user');
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
                 showAdminPage();
@@ -346,7 +357,7 @@
         }
 
         function logout() {
-            sessionStorage.removeItem('admin_user');
+            localStorage.removeItem('admin_user');
             currentUser = null;
             document.getElementById('login-page').classList.remove('hidden');
             document.getElementById('admin-page').classList.add('hidden');
