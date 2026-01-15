@@ -459,6 +459,9 @@
             currentUser = null;
             document.getElementById('login-page').classList.remove('hidden');
             document.getElementById('admin-page').classList.add('hidden');
+            // 隱藏底部欄
+            const bottomBar = document.querySelector('.bottom-bar');
+            if (bottomBar) bottomBar.classList.add('hidden');
         }
 
         // ============ 頁面顯示 ============
@@ -731,22 +734,46 @@
                 grouped[p.category].push(p);
             });
 
+            // 按照 categories 的順序排列分類
+            const categoryOrder = categories.map(c => c.name);
+            const sortedCategories = Object.keys(grouped).sort((a, b) => {
+                const indexA = categoryOrder.indexOf(a);
+                const indexB = categoryOrder.indexOf(b);
+                // 如果分類不在 categories 中，放到最後
+                if (indexA === -1) return 1;
+                if (indexB === -1) return -1;
+                return indexA - indexB;
+            });
+
             let html = '';
-            Object.entries(grouped).forEach(([category, items]) => {
+            sortedCategories.forEach(category => {
+                const items = grouped[category];
                 items.forEach(p => {
                     const statusClass = p.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
                     const statusText = p.enabled ? '啟用' : '停用';
 
                     html += `
                         <tr class="product-row border-b border-gray-100">
-                            <td class="p-3 text-gray-600">${p.category}</td>
-                            <td class="p-3 font-medium">${p.name}</td>
+                            <td class="p-3 text-gray-600 cursor-pointer hover:bg-amber-50 rounded" 
+                                onclick="editCategory(this, ${p.id}, '${p.category.replace(/'/g, "\\'")}')" 
+                                title="點擊修改分類">
+                                ${p.category}
+                            </td>
+                            <td class="p-3 font-medium cursor-pointer hover:bg-amber-50 rounded" 
+                                onclick="editName(this, ${p.id}, '${p.name.replace(/'/g, "\\'")}')" 
+                                title="點擊修改品名">
+                                ${p.name}
+                            </td>
                             <td class="p-3 text-right cursor-pointer hover:bg-amber-50 rounded" 
                                 onclick="editPrice(this, ${p.id}, ${p.price})" 
                                 title="點擊修改價格">
                                 $${p.price}
                             </td>
-                            <td class="p-3 text-gray-500 text-sm">${p.note || '-'}</td>
+                            <td class="p-3 text-gray-500 text-sm cursor-pointer hover:bg-amber-50 rounded" 
+                                onclick="editNote(this, ${p.id}, '${(p.note || '').replace(/'/g, "\\'")}')" 
+                                title="點擊修改備註">
+                                ${p.note || '-'}
+                            </td>
                             <td class="p-3 text-center">
                                 <span onclick="toggleProductStatus(${p.id})" 
                                       class="px-2 py-1 rounded text-xs ${statusClass} cursor-pointer hover:opacity-80 transition select-none"
@@ -787,8 +814,145 @@
             const input = cell.querySelector('input');
             input.focus();
 
-            // 如果 input 失去焦點時沒有改變，還原
+            // 注意：如果 input 失去焦點時沒有改變，還原
             input.dataset.original = originalContent;
+        }
+
+        function editCategory(cell, id, currentCategory) {
+            if (cell.querySelector('select')) return;
+            const originalContent = cell.innerHTML;
+
+            let optionsHtml = '<option value="">請選擇</option>';
+            categories.forEach(cat => {
+                const selected = cat.name === currentCategory ? 'selected' : '';
+                optionsHtml += `<option value="${cat.name}" ${selected}>${cat.name}</option>`;
+            });
+
+            cell.innerHTML = `
+                <select class="w-full p-1 border rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+                        onchange="saveCategory(this, ${id}, '${currentCategory}')"
+                        onblur="this.onchange()">
+                    ${optionsHtml}
+                </select>
+            `;
+            cell.querySelector('select').focus();
+            cell.querySelector('select').dataset.original = originalContent;
+        }
+
+        async function saveCategory(select, id, oldCategory) {
+            const newCategory = select.value;
+            const cell = select.parentElement;
+
+            if (!newCategory || newCategory === oldCategory) {
+                cell.innerHTML = select.dataset.original;
+                return;
+            }
+
+            await updateProductField(id, 'category', newCategory, cell, oldCategory);
+        }
+
+        function editName(cell, id, currentName) {
+            if (cell.querySelector('input')) return;
+            const originalContent = cell.innerHTML;
+
+            cell.innerHTML = `
+                <input type="text" 
+                       value="${currentName}" 
+                       class="w-full p-1 border rounded focus:ring-2 focus:ring-amber-500 outline-none"
+                       onblur="saveName(this, ${id}, '${currentName.replace(/'/g, "\\'")}')"
+                       onkeydown="if(event.key==='Enter') this.blur()"
+                >
+            `;
+            const input = cell.querySelector('input');
+            input.focus();
+            input.select();
+            input.dataset.original = originalContent;
+        }
+
+        async function saveName(input, id, oldName) {
+            const newName = input.value.trim();
+            const cell = input.parentElement;
+
+            if (!newName || newName === oldName) {
+                cell.innerHTML = input.dataset.original;
+                return;
+            }
+
+            await updateProductField(id, 'name', newName, cell, oldName);
+        }
+
+        function editNote(cell, id, currentNote) {
+            if (cell.querySelector('input')) return;
+            const originalContent = cell.innerHTML;
+
+            cell.innerHTML = `
+                <input type="text" 
+                       value="${currentNote}" 
+                       class="w-full p-1 border rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+                       onblur="saveNote(this, ${id}, '${currentNote.replace(/'/g, "\\'")}')"
+                       onkeydown="if(event.key==='Enter') this.blur()"
+                       placeholder="無備註"
+                >
+            `;
+            const input = cell.querySelector('input');
+            input.focus();
+            input.select();
+            input.dataset.original = originalContent;
+        }
+
+        async function saveNote(input, id, oldNote) {
+            const newNote = input.value.trim();
+            const cell = input.parentElement;
+
+            if (newNote === oldNote) {
+                cell.innerHTML = input.dataset.original;
+                return;
+            }
+
+            await updateProductField(id, 'note', newNote, cell, oldNote || '');
+        }
+
+        async function updateProductField(id, field, newValue, cell, oldValue) {
+            const product = products.find(p => p.id == id);
+            if (!product) return;
+
+            // 準備更新資料
+            const updateData = {
+                userId: currentUser?.userId || ADMIN_USER_ID,
+                id: id,
+                category: product.category,
+                name: product.name,
+                price: product.price,
+                note: product.note || '',
+                enabled: product.enabled
+            };
+            updateData[field] = newValue;
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=updateProduct`, {
+                    method: 'POST',
+                    body: JSON.stringify(updateData)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    product[field] = newValue;
+                    // 更新顯示
+                    if (field === 'price') {
+                        cell.innerHTML = `$${newValue}`;
+                    } else if (field === 'note') {
+                        cell.innerHTML = newValue || '-';
+                    } else {
+                        cell.innerHTML = newValue;
+                    }
+                    Toast.fire({ icon: 'success', title: '已更新' });
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('更新失敗', error.message, 'error');
+                loadProducts();
+            }
         }
 
         async function savePrice(input, id, oldPrice) {
