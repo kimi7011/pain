@@ -158,20 +158,55 @@
         // 從 Google Sheets 載入品項
         async function loadItems() {
             const sheetsUrl = localStorage.getItem(SHEETS_URL_KEY);
+            const container = document.getElementById('items-container');
+            
             if (!sheetsUrl) {
+                // 更新 UI 顯示提示
+                if (container) {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">請先設定 Google Sheets 網址<br><button onclick="toggleAdminPanel()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">前往設定</button></p>';
+                }
                 if (isAdminMode) {
                     Swal.fire('提示', '請先設定 Google Sheets 網址', 'info');
                 }
                 return;
             }
 
+            // 顯示載入中
+            if (container) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">載入品項中...</p>';
+            }
+
             try {
                 // 從 Google Sheets 讀取資料
-                const response = await fetch(`${GAS_URL}?action=getItems&sheetsUrl=${encodeURIComponent(sheetsUrl)}`);
-                const data = await response.json();
+                console.log('開始載入品項，Google Sheets URL:', sheetsUrl);
+                console.log('GAS URL:', GAS_URL);
+                
+                const fetchUrl = `${GAS_URL}?action=getItems&sheetsUrl=${encodeURIComponent(sheetsUrl)}`;
+                console.log('請求 URL:', fetchUrl);
+                
+                const response = await fetch(fetchUrl);
+                
+                // 檢查回應狀態
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('HTTP 錯誤回應:', response.status, errorText);
+                    throw new Error(`HTTP 錯誤: ${response.status} - ${errorText.substring(0, 100)}`);
+                }
+                
+                // 嘗試解析 JSON
+                let data;
+                const text = await response.text();
+                console.log('伺服器回應:', text.substring(0, 200));
+                try {
+                    data = JSON.parse(text);
+                } catch (parseError) {
+                    console.error('JSON 解析錯誤:', parseError);
+                    console.error('回應內容:', text);
+                    throw new Error('無法解析伺服器回應，請檢查 Google Apps Script 是否正確部署。回應內容：' + text.substring(0, 200));
+                }
                 
                 if (data.success) {
-                    itemsData = data.items;
+                    itemsData = data.items || [];
                     renderItems();
                     if (isAdminMode) {
                         renderAdminItemsList();
@@ -181,6 +216,10 @@
                 }
             } catch (error) {
                 console.error('載入品項失敗:', error);
+                // 更新 UI 顯示錯誤
+                if (container) {
+                    container.innerHTML = `<p class="text-red-500 text-center py-8">載入失敗：${error.message}<br><button onclick="loadItems()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">重新載入</button></p>`;
+                }
                 if (isAdminMode) {
                     Swal.fire('錯誤', '載入品項失敗：' + error.message, 'error');
                 }
