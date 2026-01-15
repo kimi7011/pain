@@ -242,15 +242,23 @@
     </div>
 
     <script>
-        // ============ 設定 ============
-        // TODO: 部署 Apps Script 後，將 URL 更新到這裡
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzBjMrSZNLiqaTf90qvBC6oxB18CG--atfHzk9uU4je0z0ef1hDbZtdhVlLkYOl335VmA/exec';
+        // ==========================================
+        //              系統設定區 (請修改此處)
+        // ==========================================
 
-        // LINE Login 設定
-        // TODO: 建立 LINE Login Channel 後，將 Channel ID 更新到這裡
+        // 1. Google Apps Script 部署網址 (必填)
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbw87FdNqOwzoZuR9crNG0BbkTQKTCF1kYvj0seUVRXBScrn0kx6jxjkTSJ9CJ5OzBUKew/exec';
+
+        // 2. LINE Login 設定 (必填)
         const LINE_LOGIN_CHANNEL_ID = '2008902569';
         const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/admin.html';
+
+        // 3. 管理員 User ID (必填)
         const ADMIN_USER_ID = 'U523fe140da9b40fff66ae287f6d4c547';
+
+        // ==========================================
+        //              以下程式碼請勿修改
+        // ==========================================
 
         // 狀態
         let currentUser = null;
