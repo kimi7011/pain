@@ -335,7 +335,7 @@
         // ==========================================
 
         // 1. Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxKXXjb20D6UhXsf9u0Pr0oa3x-mIUuiRQ_IkHbSoyS_6iE6OeEVfTlFK0SIeje42JW6Q/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxY25waurVx0KwSFKla41LmqrIINmApYa-ckRnF8lw-KFa3PZ-qJHmbhBeop8QZR2FUCw/exec';
 
         // 2. LINE Login 設定 (必填)
         const LINE_LOGIN_CHANNEL_ID = '2008902569';
@@ -539,10 +539,22 @@
             }
 
             let html = '<div class="flex flex-col gap-2">';
-            categories.forEach(cat => {
+            categories.forEach((cat, index) => {
+                const isFirst = index === 0;
+                const isLast = index === categories.length - 1;
                 html += `
                     <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
-                        <span class="font-medium text-gray-700">${cat.name}</span>
+                        <div class="flex items-center gap-2">
+                            <div class="flex flex-col gap-1">
+                                <button onclick="moveCategory(${cat.id}, 'up')" 
+                                    class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-amber-600 ${isFirst ? 'opacity-30 cursor-not-allowed' : ''}"
+                                    ${isFirst ? 'disabled' : ''}>▲</button>
+                                <button onclick="moveCategory(${cat.id}, 'down')" 
+                                    class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-amber-600 ${isLast ? 'opacity-30 cursor-not-allowed' : ''}"
+                                    ${isLast ? 'disabled' : ''}>▼</button>
+                            </div>
+                            <span class="font-medium text-gray-700">${cat.name}</span>
+                        </div>
                         <div class="flex gap-2">
                             <button onclick="editCategoryName(${cat.id}, '${cat.name}')" class="text-blue-500 hover:text-blue-700 text-sm">編輯</button>
                             <button onclick="deleteCategory(${cat.id})" class="text-red-500 hover:text-red-700 text-sm">刪除</button>
@@ -551,6 +563,27 @@
             });
             html += '</div>';
             list.innerHTML = html;
+        }
+
+        async function moveCategory(id, direction) {
+            try {
+                const response = await fetch(`${GAS_URL}?action=reorderCategory`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        id: id,
+                        direction: direction
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    loadCategories().then(() => renderCategoryManager());
+                } else {
+                    console.error(result.error);
+                }
+            } catch (error) {
+                console.error(error);
+            }
         }
 
         async function addNewCategory() {
