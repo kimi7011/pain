@@ -157,6 +157,24 @@
 </head>
 
 <body class="p-4 md:p-6">
+    <!-- 公告橫幅 -->
+    <div id="announcement-banner"
+        class="hidden max-w-4xl mx-auto mb-4 p-4 bg-amber-100 border border-amber-300 rounded-xl text-amber-800 relative">
+        <button onclick="closeAnnouncement()"
+            class="absolute top-2 right-2 text-amber-600 hover:text-amber-800 text-xl">&times;</button>
+        <p id="announcement-text" class="pr-6"></p>
+    </div>
+
+    <!-- 休息中覆蓋層 -->
+    <div id="closed-overlay" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md text-center shadow-2xl">
+            <div class="text-6xl mb-4">🌙</div>
+            <h2 class="text-2xl font-bold text-amber-800 mb-4">目前休息中</h2>
+            <p id="business-hours-info" class="text-gray-600 mb-4"></p>
+            <p class="text-sm text-gray-500">請於營業時間再來訂購，感謝您！</p>
+        </div>
+    </div>
+
     <div class="max-w-4xl mx-auto glass-card p-6">
         <div class="flex items-center gap-3 mb-6">
             <span class="text-4xl">🍞</span>
@@ -204,7 +222,7 @@
         // ==========================================
 
         // Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxg7Gc9marHFe3LVFW1YRrzFT3yVW2xsTIPWe6-M0UvIXOS2m1pHCwIEc9XuzgBOLzv2w/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxNi_5gF0FX3J0Ai_uUAiiOq4pC_86lnf_7SM3sjPOP9un32pr3l2U7PvnSrfLvoUaZhA/exec';
 
         // ==========================================
         //              以下程式碼請勿修改
@@ -212,11 +230,48 @@
 
         let products = [];
         let categories = [];
+        let storeSettings = {};
 
         // ============ 初始化 ============
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadStoreSettings();
             loadProducts();
         });
+
+        // ============ 載入店家設定 ============
+        async function loadStoreSettings() {
+            try {
+                const response = await fetch(`${GAS_URL}?action=getSettings`);
+                const result = await response.json();
+                if (result.success) {
+                    storeSettings = result.settings;
+                    applyStoreSettings();
+                }
+            } catch (error) {
+                console.error('載入設定失敗', error);
+            }
+        }
+
+        function applyStoreSettings() {
+            // 顯示公告
+            if (storeSettings.announcement_enabled === 'true' && storeSettings.announcement) {
+                document.getElementById('announcement-text').textContent = storeSettings.announcement;
+                document.getElementById('announcement-banner').classList.remove('hidden');
+            }
+
+            // 檢查營業狀態
+            if (!storeSettings.currentlyOpen) {
+                const startTime = storeSettings.business_hours_start || '09:00';
+                const endTime = storeSettings.business_hours_end || '21:00';
+                document.getElementById('business-hours-info').textContent =
+                    `營業時間：${startTime} ~ ${endTime}`;
+                document.getElementById('closed-overlay').classList.remove('hidden');
+            }
+        }
+
+        function closeAnnouncement() {
+            document.getElementById('announcement-banner').classList.add('hidden');
+        }
 
         // ============ 載入商品 ============
         async function loadProducts() {
