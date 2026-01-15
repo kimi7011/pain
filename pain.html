@@ -9,23 +9,47 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        :root {
+            --primary: #8B5A2B;
+            --primary-dark: #6B4423;
+            --secondary: #F5E6D3;
+            --accent: #D4A574;
+        }
+
+        body {
+            background: linear-gradient(135deg, #F5E6D3 0%, #E8D4C4 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(139, 90, 43, 0.15);
+        }
+
         /* 固定總金額的位置 */
         #total-price {
             position: fixed;
             bottom: 90px;
             right: 24px;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 10px;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 12px;
             font-size: 1.2rem;
             font-weight: bold;
             z-index: 10;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(139, 90, 43, 0.2);
+            color: var(--primary);
+            border: 2px solid var(--accent);
         }
 
         table {
             table-layout: fixed;
             width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
         th:nth-child(1),
@@ -42,12 +66,57 @@
             width: 20%;
         }
 
+        .category-header {
+            background: linear-gradient(135deg, #8B5A2B 0%, #6B4423 100%);
+            color: white;
+        }
+
+        .category-header th {
+            border: none !important;
+        }
+
+        .product-row:hover {
+            background: rgba(212, 165, 116, 0.15);
+        }
+
+        .quantity-input {
+            border: 2px solid #D4A574;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .quantity-input:focus {
+            border-color: #8B5A2B;
+            box-shadow: 0 0 0 3px rgba(139, 90, 43, 0.2);
+            outline: none;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #8B5A2B 0%, #6B4423 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(139, 90, 43, 0.4);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 90, 43, 0.5);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
         .loading-spinner {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #F5E6D3;
+            border-top: 3px solid #8B5A2B;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -61,43 +130,61 @@
                 transform: rotate(360deg);
             }
         }
+
+        .input-field {
+            border: 2px solid #D4A574;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .input-field:focus {
+            border-color: #8B5A2B;
+            box-shadow: 0 0 0 3px rgba(139, 90, 43, 0.2);
+            outline: none;
+        }
     </style>
 </head>
 
-<body class="bg-gray-100 p-6">
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h2 class="text-2xl font-bold mb-4 text-gray-700">揉PAin訂購表單</h2>
+<body class="p-4 md:p-6">
+    <div class="max-w-4xl mx-auto glass-card p-6">
+        <div class="flex items-center gap-3 mb-6">
+            <span class="text-4xl">🍞</span>
+            <h2 class="text-2xl font-bold text-amber-800">揉PAin訂購表單</h2>
+        </div>
 
         <!-- LINE 顯示名稱與聯絡電話輸入框 -->
         <div class="mb-4">
-            <label class="block text-gray-700">LINE顯示名稱：</label>
-            <input type="text" id="line-name" class="w-full border rounded p-2" placeholder="請輸入您的LINE顯示名稱">
+            <label class="block text-amber-800 font-medium mb-2">LINE顯示名稱：</label>
+            <input type="text" id="line-name" class="w-full input-field p-3" placeholder="請輸入您的LINE顯示名稱">
         </div>
-        <div class="mb-4">
-            <label class="block text-gray-700">聯絡電話：</label>
-            <input type="tel" id="contact-phone" class="w-full border rounded p-2" placeholder="請輸入您的聯絡電話">
+        <div class="mb-6">
+            <label class="block text-amber-800 font-medium mb-2">聯絡電話：</label>
+            <input type="tel" id="contact-phone" class="w-full input-field p-3" placeholder="請輸入您的聯絡電話">
         </div>
 
-        <table class="min-w-full border-collapse border border-gray-300 text-gray-700">
-            <tbody id="products-table">
-                <tr>
-                    <td colspan="4" class="p-8 text-center text-gray-500">
-                        <div class="loading-spinner mx-auto mb-2"></div>
-                        <p>載入商品中...</p>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <div class="text-right mt-4 text-xl font-semibold text-gray-700" id="total-price">總金額: $0</div>
+        <div class="overflow-x-auto rounded-xl border border-amber-200">
+            <table class="min-w-full">
+                <tbody id="products-table">
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-amber-700">
+                            <div class="loading-spinner mx-auto mb-3"></div>
+                            <p>載入商品中...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="text-right mt-4 text-xl font-semibold" id="total-price">總金額: $0</div>
     </div>
 
-    <button onclick="submitOrder()"
-        class="fixed bottom-6 right-6 px-6 py-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition">送出訂單</button>
+    <button onclick="submitOrder()" class="fixed bottom-6 right-6 btn-submit">
+        🛒 送出訂單
+    </button>
 
     <script>
         // ============ 設定 ============
         // TODO: 部署 Apps Script 後，將 URL 更新到這裡
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzBjMrSZNLiqaTf90qvBC6oxB18CG--atfHzk9uU4je0z0ef1hDbZtdhVlLkYOl335VmA/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbw87FdNqOwzoZuR9crNG0BbkTQKTCF1kYvj0seUVRXBScrn0kx6jxjkTSJ9CJ5OzBUKew/exec';
 
         let products = [];
 
@@ -121,9 +208,9 @@
             } catch (error) {
                 document.getElementById('products-table').innerHTML = `
                     <tr>
-                        <td colspan="4" class="p-8 text-center text-red-500">
+                        <td colspan="4" class="p-8 text-center text-red-600">
                             載入失敗：${error.message}<br>
-                            <button onclick="loadProducts()" class="mt-2 text-blue-500 underline">重試</button>
+                            <button onclick="loadProducts()" class="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition">重試</button>
                         </td>
                     </tr>`;
             }
@@ -134,7 +221,7 @@
             const tbody = document.getElementById('products-table');
 
             if (products.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500">目前沒有商品</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-amber-600">目前沒有商品</td></tr>';
                 return;
             }
 
@@ -149,23 +236,23 @@
             Object.entries(grouped).forEach(([category, items]) => {
                 // 分類標題
                 html += `
-                    <tr class="bg-gray-200">
-                        <th class="p-1 border">${category}</th>
-                        <th class="p-1 border">數量</th>
-                        <th class="p-1 border">價格</th>
-                        <th class="p-1 border">金額</th>
+                    <tr class="category-header">
+                        <th class="p-2 text-left font-semibold">${category}</th>
+                        <th class="p-2">數量</th>
+                        <th class="p-2">價格</th>
+                        <th class="p-2">金額</th>
                     </tr>`;
 
                 // 商品列
                 items.forEach(p => {
                     const displayName = p.note ? `${p.name}(${p.note})` : p.name;
                     html += `
-                        <tr class="hover:bg-gray-100 text-center">
-                            <td class="p-1 border">${displayName}</td>
-                            <td class="p-1 border">
+                        <tr class="product-row text-center border-b border-amber-100">
+                            <td class="p-2 text-left text-gray-700">${displayName}</td>
+                            <td class="p-2">
                                 <input 
                                     type="tel" 
-                                    class="quantity w-full text-center border rounded p-1" 
+                                    class="quantity quantity-input w-full text-center p-2" 
                                     data-price="${p.price}"
                                     data-name="${p.name}"
                                     value="0" 
@@ -173,8 +260,8 @@
                                     oninput="validateInput(this); calculateAmount()" 
                                     onblur="setDefaultValue(this)">
                             </td>
-                            <td class="p-1 border">${p.price}</td>
-                            <td class="p-1 border amount">0</td>
+                            <td class="p-2 text-amber-700 font-medium">$${p.price}</td>
+                            <td class="p-2 text-amber-800 font-semibold amount">$0</td>
                         </tr>`;
                 });
             });
@@ -196,7 +283,7 @@
                     let name = quantityInput.getAttribute("data-name");
                     let amount = quantity * price;
 
-                    row.querySelector(".amount").innerText = amount;
+                    row.querySelector(".amount").innerText = `$${amount}`;
                     total += amount;
 
                     if (quantity > 0) {
