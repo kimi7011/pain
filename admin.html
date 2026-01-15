@@ -596,7 +596,7 @@
         // ============ 分類管理 ============
         async function loadCategories() {
             try {
-                const response = await fetch(`${GAS_URL}?action=getCategories`);
+                const response = await fetch(`${GAS_URL}?action=getCategories&_=${new Date().getTime()}`);
                 const result = await response.json();
                 if (result.success) {
                     categories = result.categories;
@@ -797,7 +797,7 @@
         // ============ 商品管理 ============
         async function loadProducts() {
             try {
-                const response = await fetch(`${GAS_URL}?action=getProducts`);
+                const response = await fetch(`${GAS_URL}?action=getProducts&_=${new Date().getTime()}`);
                 const result = await response.json();
 
                 if (result.success) {
@@ -1272,7 +1272,7 @@
             ordersList.innerHTML = '<p class="text-center py-8 text-gray-500">載入中...</p>';
 
             try {
-                const response = await fetch(`${GAS_URL}?action=getOrders&userId=${ADMIN_USER_ID}`);
+                const response = await fetch(`${GAS_URL}?action=getOrders&userId=${ADMIN_USER_ID}&_=${new Date().getTime()}`);
                 const result = await response.json();
 
                 if (result.success) {
@@ -1414,7 +1414,7 @@
 
         async function loadSettings() {
             try {
-                const response = await fetch(`${GAS_URL}?action=getSettings`);
+                const response = await fetch(`${GAS_URL}?action=getSettings&_=${new Date().getTime()}`);
                 const result = await response.json();
                 if (result.success) {
                     storeSettings = result.settings;
