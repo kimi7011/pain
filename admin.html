@@ -567,6 +567,9 @@
 
         async function moveCategory(id, direction) {
             try {
+                // Show loading indicator
+                Swal.fire({ title: '移動中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
                 const response = await fetch(`${GAS_URL}?action=reorderCategory`, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -576,13 +579,16 @@
                     })
                 });
                 const result = await response.json();
+                Swal.close();
+
                 if (result.success) {
-                    loadCategories().then(() => renderCategoryManager());
+                    await loadCategories();
+                    renderCategoryManager();
                 } else {
-                    console.error(result.error);
+                    Swal.fire('移動失敗', result.error || '未知錯誤', 'error');
                 }
             } catch (error) {
-                console.error(error);
+                Swal.fire('錯誤', error.message, 'error');
             }
         }
 
