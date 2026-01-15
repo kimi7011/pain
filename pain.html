@@ -390,14 +390,18 @@ ${orderData.orders.join("\n")}
                     }).then(() => {
                         // 重置表單
                         document.querySelectorAll('.quantity').forEach(input => input.value = '0');
-                        document.querySelectorAll('.amount').forEach(td => td.innerText = '0');
+                        document.querySelectorAll('.amount').forEach(td => td.innerText = '$0');
                         document.getElementById('total-price').innerText = '總金額: $0';
                     });
                 } else {
-                    throw new Error(data.error);
+                    throw new Error(data.error || '未知錯誤');
                 }
             } catch (error) {
-                Swal.fire('錯誤', '送出失敗：' + error.message, 'error');
+                Swal.fire({
+                    icon: 'error',
+                    title: '送出失敗',
+                    text: error.message === 'Failed to fetch' ? '網路連線失敗，請檢查您的網路狀態' : error.message
+                });
             }
         }
 
