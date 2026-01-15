@@ -28,21 +28,32 @@
             box-shadow: 0 8px 32px rgba(139, 90, 43, 0.15);
         }
 
-        /* 固定總金額的位置 */
-        #total-price {
+        /* 底部固定欄 */
+        .bottom-bar {
             position: fixed;
-            bottom: 90px;
-            right: 24px;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-size: 1.2rem;
+            padding: 16px 24px;
+            box-shadow: 0 -4px 20px rgba(139, 90, 43, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            border-top: 1px solid rgba(139, 90, 43, 0.2);
+        }
+
+        .total-price-display {
+            font-size: 1.25rem;
             font-weight: bold;
-            z-index: 10;
-            box-shadow: 0 4px 20px rgba(139, 90, 43, 0.2);
             color: var(--primary);
-            border: 2px solid var(--accent);
+        }
+
+        /* 預留底部空間給固定欄 */
+        .content-spacer {
+            height: 100px;
         }
 
         table {
@@ -94,8 +105,8 @@
         .btn-submit {
             background: linear-gradient(135deg, #8B5A2B 0%, #6B4423 100%);
             color: white;
-            padding: 16px 32px;
-            border-radius: 50px;
+            padding: 12px 32px;
+            border-radius: 12px;
             font-weight: 600;
             font-size: 1.1rem;
             transition: all 0.3s ease;
@@ -174,17 +185,28 @@
                 </tbody>
             </table>
         </div>
-        <div class="text-right mt-4 text-xl font-semibold" id="total-price">總金額: $0</div>
+        <div class="content-spacer"></div>
     </div>
 
-    <button onclick="submitOrder()" class="fixed bottom-6 right-6 btn-submit">
-        🛒 送出訂單
-    </button>
+    <!-- 底部固定欄 -->
+    <div class="bottom-bar">
+        <div class="total-price-display" id="total-price">總金額: $0</div>
+        <button onclick="submitOrder()" class="btn-submit">
+            🛒 送出訂單
+        </button>
+    </div>
 
     <script>
-        // ============ 設定 ============
-        // TODO: 部署 Apps Script 後，將 URL 更新到這裡
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzBjMrSZNLiqaTf90qvBC6oxB18CG--atfHzk9uU4je0z0ef1hDbZtdhVlLkYOl335VmA/exec';
+        // ==========================================
+        //              系統設定區 (請修改此處)
+        // ==========================================
+
+        // Google Apps Script 部署網址 (必填)
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbw87FdNqOwzoZuR9crNG0BbkTQKTCF1kYvj0seUVRXBScrn0kx6jxjkTSJ9CJ5OzBUKew/exec';
+
+        // ==========================================
+        //              以下程式碼請勿修改
+        // ==========================================
 
         let products = [];
 
