@@ -190,10 +190,12 @@
 
     <!-- 底部固定欄 -->
     <div class="bottom-bar">
-        <div class="total-price-display" id="total-price">總金額: $0</div>
-        <button onclick="submitOrder()" class="btn-submit">
-            🛒 送出訂單
-        </button>
+        <div class="w-full max-w-4xl mx-auto flex items-center justify-between md:justify-end md:gap-6">
+            <div class="total-price-display" id="total-price">總金額: $0</div>
+            <button onclick="submitOrder()" class="btn-submit">
+                🛒 送出訂單
+            </button>
+        </div>
     </div>
 
     <script>
@@ -267,20 +269,28 @@
 
                 // 商品列
                 items.forEach(p => {
-                    const displayName = p.note ? `${p.name}(${p.note})` : p.name;
+                    const displayName = p.note ? `${p.name} ${p.note}` : p.name;
                     html += `
                         <tr class="product-row text-center border-b border-amber-100">
                             <td class="p-2 text-left text-gray-700">${displayName}</td>
                             <td class="p-2">
-                                <input 
-                                    type="tel" 
-                                    class="quantity quantity-input w-full text-center p-2" 
-                                    data-price="${p.price}"
-                                    data-name="${p.name}"
-                                    value="0" 
-                                    min="0" 
-                                    oninput="validateInput(this); calculateAmount()" 
-                                    onblur="setDefaultValue(this)">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200 flex items-center justify-center font-bold pb-1"
+                                        onclick="updateQuantity(this, -1)">-</button>
+                                    <input 
+                                        type="tel" 
+                                        class="quantity w-12 text-center p-1 bg-transparent border-0 focus:ring-0 font-medium text-lg" 
+                                        data-price="${p.price}"
+                                        data-name="${p.name}"
+                                        value="0" 
+                                        min="0" 
+                                        readonly
+                                        onclick="this.removeAttribute('readonly'); this.select();"
+                                        onblur="this.setAttribute('readonly', true); setDefaultValue(this)"
+                                        oninput="validateInput(this); calculateAmount()">
+                                    <button class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200 flex items-center justify-center font-bold pb-1"
+                                        onclick="updateQuantity(this, 1)">+</button>
+                                </div>
                             </td>
                             <td class="p-2 text-amber-700 font-medium">$${p.price}</td>
                             <td class="p-2 text-amber-800 font-semibold amount">$0</td>
@@ -406,6 +416,17 @@ ${orderData.orders.join("\n")}
         }
 
         // ============ 輔助函數 ============
+        function updateQuantity(btn, change) {
+            const input = btn.parentElement.querySelector('.quantity');
+            let currentValue = parseInt(input.value, 10) || 0;
+            let newValue = currentValue + change;
+
+            if (newValue < 0) newValue = 0;
+
+            input.value = newValue;
+            calculateAmount();
+        }
+
         function setDefaultValue(input) {
             if (input.value.trim() === '') {
                 input.value = '0';
