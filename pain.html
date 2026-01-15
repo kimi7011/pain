@@ -222,7 +222,7 @@
         // ==========================================
 
         // Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxNi_5gF0FX3J0Ai_uUAiiOq4pC_86lnf_7SM3sjPOP9un32pr3l2U7PvnSrfLvoUaZhA/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbxsp4ro4_eT_QCcMazDcJG6mJsfSbDK4tjROmd54xXPHsQkNXkgtggEU5W78N6tOWU6iQ/exec';
 
         // ==========================================
         //              以下程式碼請勿修改
@@ -261,10 +261,17 @@
 
             // 檢查營業狀態
             if (!storeSettings.currentlyOpen) {
-                const startTime = storeSettings.business_hours_start || '09:00';
-                const endTime = storeSettings.business_hours_end || '21:00';
+                const startTime = (storeSettings.business_period_start || '').replace('T', ' ');
+                const endTime = (storeSettings.business_period_end || '').replace('T', ' ');
+
+                // 格式化顯示：只顯示月/日 時:分
+                const formatTime = (ts) => {
+                    if (!ts) return '未設定';
+                    return ts.substring(5, 16).replace('-', '/');
+                };
+
                 document.getElementById('business-hours-info').textContent =
-                    `營業時間：${startTime} ~ ${endTime}`;
+                    `開放訂購期間：${formatTime(startTime)} ~ ${formatTime(endTime)}`;
                 document.getElementById('closed-overlay').classList.remove('hidden');
             }
         }
