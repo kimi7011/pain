@@ -213,7 +213,7 @@
     </div>
 
     <!-- 底部固定欄 -->
-    <div class="bottom-bar">
+    <div class="bottom-bar hidden">
         <div class="w-full max-w-6xl mx-auto flex justify-end">
             <button id="btn-add-product" onclick="showAddProductModal()" class="btn-primary">
                 + 新增商品
@@ -468,6 +468,7 @@
             document.getElementById('admin-name').textContent = currentUser.displayName || '管理員';
             loadCategories(); // 先載入分類
             loadProducts();
+            showTab('products'); // 確保切換到商品頁籤並顯示底部欄
         }
 
         function showTab(tab) {
