@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        /* 固定總金額的位置 */
         #total-price {
             position: fixed;
             bottom: 90px;
@@ -18,87 +20,55 @@
             font-size: 1.2rem;
             font-weight: bold;
             z-index: 10;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         table {
             table-layout: fixed;
             width: 100%;
         }
-        th:nth-child(1), td:nth-child(1) {
+
+        th:nth-child(1),
+        td:nth-child(1) {
             width: 40%;
         }
-        th:nth-child(2), td:nth-child(2),
-        th:nth-child(3), td:nth-child(3),
-        th:nth-child(4), td:nth-child(4) {
+
+        th:nth-child(2),
+        td:nth-child(2),
+        th:nth-child(3),
+        td:nth-child(3),
+        th:nth-child(4),
+        td:nth-child(4) {
             width: 20%;
         }
-        .admin-panel {
-            display: none;
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
-        .admin-panel.active {
-            display: block;
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body class="bg-gray-100 p-6">
-    <!-- 管理按鈕 -->
-    <button id="admin-toggle" onclick="showLoginModal()" class="fixed top-6 right-6 px-4 py-2 bg-purple-500 text-white rounded-lg shadow-lg z-20">
-        管理後台
-    </button>
-
-    <!-- 登入介面 -->
-    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30" style="display: none;">
-        <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full mx-4">
-            <h2 class="text-2xl font-bold mb-4 text-gray-700">後台登入</h2>
-            <div class="mb-4">
-                <label class="block text-gray-700 mb-2">管理員密碼：</label>
-                <input type="password" id="admin-password" class="w-full border rounded p-2" placeholder="請輸入管理員密碼" onkeypress="if(event.key === 'Enter') login()">
-            </div>
-            <div class="flex gap-2">
-                <button onclick="login()" class="flex-1 px-4 py-2 bg-blue-500 text-white rounded">登入</button>
-                <button onclick="hideLoginModal()" class="flex-1 px-4 py-2 bg-gray-500 text-white rounded">取消</button>
-            </div>
-            <p id="login-error" class="text-red-500 text-sm mt-2" style="display: none;"></p>
-        </div>
-    </div>
-
-    <!-- 後台管理介面 -->
-    <div id="admin-panel" class="admin-panel max-w-6xl mx-auto bg-white p-6 rounded-xl shadow-md mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold text-gray-700">後台管理介面</h2>
-            <button onclick="logout()" class="px-4 py-2 bg-red-500 text-white rounded">登出</button>
-        </div>
-        
-        <div class="mb-4">
-            <label class="block text-gray-700 mb-2">Google Sheets 網址：</label>
-            <input type="text" id="sheets-url" class="w-full border rounded p-2 mb-2" placeholder="請輸入 Google Sheets 網址">
-            <button onclick="saveSheetsUrl()" class="px-4 py-2 bg-blue-500 text-white rounded">儲存網址</button>
-        </div>
-
-        <div class="mb-4">
-            <h3 class="text-xl font-bold mb-2">新增品項</h3>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                <input type="text" id="new-category" class="border rounded p-2" placeholder="分類名稱">
-                <input type="text" id="new-item" class="border rounded p-2" placeholder="品項名稱">
-                <input type="number" id="new-price" class="border rounded p-2" placeholder="價格">
-                <button onclick="addItem()" class="px-4 py-2 bg-green-500 text-white rounded">新增品項</button>
-            </div>
-        </div>
-
-        <div class="mb-4">
-            <h3 class="text-xl font-bold mb-2">品項列表</h3>
-            <div id="items-list" class="border rounded p-4 max-h-96 overflow-y-auto">
-                <p class="text-gray-500">載入中...</p>
-            </div>
-        </div>
-
-        <button onclick="loadItems()" class="px-4 py-2 bg-blue-500 text-white rounded mb-2">重新載入品項</button>
-        <button onclick="toggleAdminPanel()" class="px-4 py-2 bg-gray-500 text-white rounded">返回表單</button>
-    </div>
-
-    <!-- 訂購表單 -->
-    <div id="order-form" class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-md">
         <h2 class="text-2xl font-bold mb-4 text-gray-700">揉PAin訂購表單</h2>
-        
+
+        <!-- LINE 顯示名稱與聯絡電話輸入框 -->
         <div class="mb-4">
             <label class="block text-gray-700">LINE顯示名稱：</label>
             <input type="text" id="line-name" class="w-full border rounded p-2" placeholder="請輸入您的LINE顯示名稱">
@@ -108,510 +78,139 @@
             <input type="tel" id="contact-phone" class="w-full border rounded p-2" placeholder="請輸入您的聯絡電話">
         </div>
 
-        <div id="items-container">
-            <p class="text-gray-500 text-center py-8">載入品項中...</p>
-        </div>
-
+        <table class="min-w-full border-collapse border border-gray-300 text-gray-700">
+            <tbody id="products-table">
+                <tr>
+                    <td colspan="4" class="p-8 text-center text-gray-500">
+                        <div class="loading-spinner mx-auto mb-2"></div>
+                        <p>載入商品中...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
         <div class="text-right mt-4 text-xl font-semibold text-gray-700" id="total-price">總金額: $0</div>
     </div>
-    
-    <button onclick="submitOrder()" class="fixed bottom-6 right-6 px-6 py-3 bg-blue-500 text-white rounded-full shadow-lg">送出訂單</button>
-    
+
+    <button onclick="submitOrder()"
+        class="fixed bottom-6 right-6 px-6 py-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition">送出訂單</button>
+
     <script>
-        // 配置 - 請替換為您的 Google Apps Script 網址
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbygmz3ueXZJlcdQzUIrtjRUAS3KQDV70j_KrMpFC3bqLQF1YCOg4KdW9kLlpNTf_LbwtA/exec";
-        const SHEETS_URL_KEY = 'sheets_url';
-        const ADMIN_SESSION_KEY = 'admin_session';
-        
-        let itemsData = [];
-        let isAdminMode = false;
-        let isLoggedIn = false;
+        // ============ 設定 ============
+        // TODO: 部署 Apps Script 後，將 URL 更新到這裡
+        const GAS_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 
-        // 檢查登入狀態
-        function checkLoginStatus() {
-            const session = sessionStorage.getItem(ADMIN_SESSION_KEY);
-            if (session) {
-                try {
-                    const sessionData = JSON.parse(session);
-                    // 檢查 session 是否過期（24小時）
-                    if (Date.now() - sessionData.timestamp < 24 * 60 * 60 * 1000) {
-                        isLoggedIn = true;
-                        return true;
-                    } else {
-                        sessionStorage.removeItem(ADMIN_SESSION_KEY);
-                    }
-                } catch (e) {
-                    sessionStorage.removeItem(ADMIN_SESSION_KEY);
-                }
-            }
-            isLoggedIn = false;
-            return false;
-        }
+        let products = [];
 
-        // 顯示登入介面
-        function showLoginModal() {
-            if (checkLoginStatus()) {
-                // 已登入，直接進入後台
-                toggleAdminPanel();
-            } else {
-                // 未登入，顯示登入介面
-                document.getElementById('login-modal').style.display = 'flex';
-                document.getElementById('admin-password').focus();
-            }
-        }
+        // ============ 初始化 ============
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProducts();
+        });
 
-        // 隱藏登入介面
-        function hideLoginModal() {
-            document.getElementById('login-modal').style.display = 'none';
-            document.getElementById('admin-password').value = '';
-            document.getElementById('login-error').style.display = 'none';
-        }
-
-        // 登入
-        async function login() {
-            const password = document.getElementById('admin-password').value.trim();
-            const errorElement = document.getElementById('login-error');
-            
-            if (!password) {
-                errorElement.textContent = '請輸入密碼';
-                errorElement.style.display = 'block';
-                return;
-            }
-
+        // ============ 載入商品 ============
+        async function loadProducts() {
             try {
-                const timestamp = new Date().getTime();
-                const response = await fetch(`${GAS_URL}?action=verifyPassword&password=${encodeURIComponent(password)}&_t=${timestamp}`, {
-                    method: 'GET',
-                    cache: 'no-cache'
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // 登入成功，儲存 session
-                    sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify({
-                        timestamp: Date.now(),
-                        token: data.token || 'authenticated'
-                    }));
-                    isLoggedIn = true;
-                    hideLoginModal();
-                    toggleAdminPanel();
+                const response = await fetch(`${GAS_URL}?action=getProducts`);
+                const result = await response.json();
+
+                if (result.success) {
+                    products = result.products.filter(p => p.enabled);
+                    renderProducts();
                 } else {
-                    errorElement.textContent = data.error || '密碼錯誤';
-                    errorElement.style.display = 'block';
-                    document.getElementById('admin-password').value = '';
+                    throw new Error(result.error);
                 }
             } catch (error) {
-                errorElement.textContent = '登入失敗：' + error.message;
-                errorElement.style.display = 'block';
-            }
-        }
-
-        // 登出
-        function logout() {
-            sessionStorage.removeItem(ADMIN_SESSION_KEY);
-            isLoggedIn = false;
-            isAdminMode = false;
-            toggleAdminPanel();
-            Swal.fire('已登出', '您已成功登出後台', 'info');
-        }
-
-        // 檢查是否為管理模式
-        function checkAdminMode() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('admin') === 'true') {
-                if (checkLoginStatus()) {
-                    isAdminMode = true;
-                    toggleAdminPanel();
-                } else {
-                    showLoginModal();
-                }
-            }
-        }
-
-        // 切換後台面板
-        function toggleAdminPanel() {
-            if (!isLoggedIn && !checkLoginStatus()) {
-                showLoginModal();
-                return;
-            }
-
-            const adminPanel = document.getElementById('admin-panel');
-            const orderForm = document.getElementById('order-form');
-            const adminToggle = document.getElementById('admin-toggle');
-            
-            isAdminMode = !isAdminMode;
-            
-            if (isAdminMode) {
-                adminPanel.classList.add('active');
-                orderForm.style.display = 'none';
-                adminToggle.textContent = '返回表單';
-                loadItems();
-                loadSheetsUrl();
-            } else {
-                adminPanel.classList.remove('active');
-                orderForm.style.display = 'block';
-                adminToggle.textContent = '管理後台';
-            }
-        }
-
-        // 載入 Google Sheets URL
-        function loadSheetsUrl() {
-            const savedUrl = localStorage.getItem(SHEETS_URL_KEY);
-            if (savedUrl) {
-                document.getElementById('sheets-url').value = savedUrl;
-            }
-        }
-
-        // 儲存 Google Sheets URL
-        function saveSheetsUrl() {
-            const url = document.getElementById('sheets-url').value.trim();
-            if (url) {
-                localStorage.setItem(SHEETS_URL_KEY, url);
-                Swal.fire('成功', 'Google Sheets 網址已儲存', 'success');
-            } else {
-                Swal.fire('錯誤', '請輸入有效的網址', 'error');
-            }
-        }
-
-        // 從 Google Sheets 載入品項
-        async function loadItems() {
-            const sheetsUrl = localStorage.getItem(SHEETS_URL_KEY);
-            const container = document.getElementById('items-container');
-            
-            if (!sheetsUrl) {
-                // 更新 UI 顯示提示
-                if (container) {
-                    container.innerHTML = '<p class="text-gray-500 text-center py-8">請先設定 Google Sheets 網址<br><button onclick="toggleAdminPanel()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">前往設定</button></p>';
-                }
-                if (isAdminMode) {
-                    Swal.fire('提示', '請先設定 Google Sheets 網址', 'info');
-                }
-                return;
-            }
-
-            // 顯示載入中
-            if (container) {
-                container.innerHTML = '<p class="text-gray-500 text-center py-8">載入品項中...</p>';
-            }
-
-            try {
-                // 從 Google Sheets 讀取資料
-                console.log('開始載入品項，Google Sheets URL:', sheetsUrl);
-                console.log('GAS URL:', GAS_URL);
-                
-                // 加入時間戳記避免快取
-                const timestamp = new Date().getTime();
-                const fetchUrl = `${GAS_URL}?action=getItems&sheetsUrl=${encodeURIComponent(sheetsUrl)}&_t=${timestamp}`;
-                console.log('請求 URL:', fetchUrl);
-                
-                // 強制不使用快取
-                const response = await fetch(fetchUrl, {
-                    method: 'GET',
-                    cache: 'no-cache',
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
-                });
-                
-                // 檢查回應狀態
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('HTTP 錯誤回應:', response.status, errorText);
-                    throw new Error(`HTTP 錯誤: ${response.status} - ${errorText.substring(0, 100)}`);
-                }
-                
-                // 嘗試解析 JSON
-                let data;
-                const text = await response.text();
-                console.log('伺服器回應:', text.substring(0, 200));
-                try {
-                    data = JSON.parse(text);
-                } catch (parseError) {
-                    console.error('JSON 解析錯誤:', parseError);
-                    console.error('回應內容:', text);
-                    throw new Error('無法解析伺服器回應，請檢查 Google Apps Script 是否正確部署。回應內容：' + text.substring(0, 200));
-                }
-                
-                if (data.success) {
-                    itemsData = data.items || [];
-                    renderItems();
-                    if (isAdminMode) {
-                        renderAdminItemsList();
-                    }
-                } else {
-                    throw new Error(data.error || '載入失敗');
-                }
-            } catch (error) {
-                console.error('載入品項失敗:', error);
-                // 更新 UI 顯示錯誤
-                if (container) {
-                    container.innerHTML = `<p class="text-red-500 text-center py-8">載入失敗：${error.message}<br><button onclick="loadItems()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">重新載入</button></p>`;
-                }
-                if (isAdminMode) {
-                    Swal.fire('錯誤', '載入品項失敗：' + error.message, 'error');
-                }
-            }
-        }
-
-        // 渲染品項到表單
-        function renderItems() {
-            const container = document.getElementById('items-container');
-            
-            if (itemsData.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 text-center py-8">目前沒有品項</p>';
-                return;
-            }
-
-            // 按分類分組
-            const categories = {};
-            itemsData.forEach(item => {
-                if (!categories[item.category]) {
-                    categories[item.category] = [];
-                }
-                categories[item.category].push(item);
-            });
-
-            let html = '<table class="min-w-full border-collapse border border-gray-300 text-gray-700"><tbody>';
-            
-            Object.keys(categories).forEach(category => {
-                html += `<tr class="bg-gray-200">
-                    <th class="p-1 border">${category}</th>
-                    <th class="p-1 border">數量</th>
-                    <th class="p-1 border">價格</th>
-                    <th class="p-1 border">金額</th>
-                </tr>`;
-                
-                categories[category].forEach(item => {
-                    html += `<tr class="hover:bg-gray-100 text-center" data-item-id="${item.id}">
-                        <td class="p-1 border">${item.name}</td>
-                        <td class="p-1 border">
-                            <input 
-                                type="tel" 
-                                class="quantity w-full text-center border rounded p-1" 
-                                data-price="${item.price}" 
-                                value="0" 
-                                min="0" 
-                                oninput="calculateAmount()" 
-                                onblur="setDefaultValue(this)">
+                document.getElementById('products-table').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-red-500">
+                            載入失敗：${error.message}<br>
+                            <button onclick="loadProducts()" class="mt-2 text-blue-500 underline">重試</button>
                         </td>
-                        <td class="p-1 border">${item.price}</td>
-                        <td class="p-1 border amount">0</td>
                     </tr>`;
+            }
+        }
+
+        // ============ 渲染商品 ============
+        function renderProducts() {
+            const tbody = document.getElementById('products-table');
+
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-500">目前沒有商品</td></tr>';
+                return;
+            }
+
+            // 依分類分組
+            const grouped = {};
+            products.forEach(p => {
+                if (!grouped[p.category]) grouped[p.category] = [];
+                grouped[p.category].push(p);
+            });
+
+            let html = '';
+            Object.entries(grouped).forEach(([category, items]) => {
+                // 分類標題
+                html += `
+                    <tr class="bg-gray-200">
+                        <th class="p-1 border">${category}</th>
+                        <th class="p-1 border">數量</th>
+                        <th class="p-1 border">價格</th>
+                        <th class="p-1 border">金額</th>
+                    </tr>`;
+
+                // 商品列
+                items.forEach(p => {
+                    const displayName = p.note ? `${p.name}(${p.note})` : p.name;
+                    html += `
+                        <tr class="hover:bg-gray-100 text-center">
+                            <td class="p-1 border">${displayName}</td>
+                            <td class="p-1 border">
+                                <input 
+                                    type="tel" 
+                                    class="quantity w-full text-center border rounded p-1" 
+                                    data-price="${p.price}"
+                                    data-name="${p.name}"
+                                    value="0" 
+                                    min="0" 
+                                    oninput="validateInput(this); calculateAmount()" 
+                                    onblur="setDefaultValue(this)">
+                            </td>
+                            <td class="p-1 border">${p.price}</td>
+                            <td class="p-1 border amount">0</td>
+                        </tr>`;
                 });
             });
-            
-            html += '</tbody></table>';
-            container.innerHTML = html;
+
+            tbody.innerHTML = html;
         }
 
-        // 渲染後台品項列表
-        function renderAdminItemsList() {
-            const container = document.getElementById('items-list');
-            
-            if (itemsData.length === 0) {
-                container.innerHTML = '<p class="text-gray-500">目前沒有品項</p>';
-                return;
-            }
-
-            let html = '<div class="space-y-2">';
-            itemsData.forEach(item => {
-                html += `<div class="flex items-center justify-between p-3 border rounded hover:bg-gray-50">
-                    <div class="flex-1">
-                        <span class="font-semibold text-blue-600">[${item.category}]</span>
-                        <span class="ml-2">${item.name}</span>
-                        <span class="ml-2 text-gray-600">$${item.price}</span>
-                    </div>
-                    <button onclick="editItem('${item.id}')" class="px-3 py-1 bg-yellow-500 text-white rounded mr-2">編輯</button>
-                    <button onclick="deleteItem('${item.id}')" class="px-3 py-1 bg-red-500 text-white rounded">刪除</button>
-                </div>`;
-            });
-            html += '</div>';
-            container.innerHTML = html;
-        }
-
-        // 檢查是否已登入（用於後台操作）
-        function checkAuth() {
-            if (!checkLoginStatus()) {
-                Swal.fire('錯誤', '請先登入後台', 'error');
-                showLoginModal();
-                return false;
-            }
-            return true;
-        }
-
-        // 新增品項
-        async function addItem() {
-            if (!checkAuth()) return;
-            
-            const category = document.getElementById('new-category').value.trim();
-            const name = document.getElementById('new-item').value.trim();
-            const price = document.getElementById('new-price').value.trim();
-
-            if (!category || !name || !price) {
-                Swal.fire('錯誤', '請填寫所有欄位', 'error');
-                return;
-            }
-
-            const sheetsUrl = localStorage.getItem(SHEETS_URL_KEY);
-            if (!sheetsUrl) {
-                Swal.fire('錯誤', '請先設定 Google Sheets 網址', 'error');
-                return;
-            }
-
-            try {
-                const session = JSON.parse(sessionStorage.getItem(ADMIN_SESSION_KEY));
-                const timestamp = new Date().getTime();
-                const response = await fetch(`${GAS_URL}?action=addItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&category=${encodeURIComponent(category)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}&token=${encodeURIComponent(session.token)}&_t=${timestamp}`, {
-                    method: 'GET',
-                    cache: 'no-cache',
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    Swal.fire('成功', '品項已新增', 'success');
-                    document.getElementById('new-category').value = '';
-                    document.getElementById('new-item').value = '';
-                    document.getElementById('new-price').value = '';
-                    await loadItems();
-                } else {
-                    throw new Error(data.error || '新增失敗');
-                }
-            } catch (error) {
-                Swal.fire('錯誤', '新增品項失敗：' + error.message, 'error');
-            }
-        }
-
-        // 編輯品項
-        async function editItem(itemId) {
-            const item = itemsData.find(i => i.id === itemId);
-            if (!item) return;
-
-            const { value: formValues } = await Swal.fire({
-                title: '編輯品項',
-                html: `
-                    <input id="edit-category" class="swal2-input" placeholder="分類" value="${item.category}">
-                    <input id="edit-name" class="swal2-input" placeholder="品項名稱" value="${item.name}">
-                    <input id="edit-price" class="swal2-input" type="number" placeholder="價格" value="${item.price}">
-                `,
-                focusConfirm: false,
-                showCancelButton: true,
-                confirmButtonText: '儲存',
-                cancelButtonText: '取消',
-                preConfirm: () => {
-                    return {
-                        category: document.getElementById('edit-category').value,
-                        name: document.getElementById('edit-name').value,
-                        price: document.getElementById('edit-price').value
-                    };
-                }
-            });
-
-            if (formValues) {
-                if (!checkAuth()) return;
-                
-                const sheetsUrl = localStorage.getItem(SHEETS_URL_KEY);
-                try {
-                    const session = JSON.parse(sessionStorage.getItem(ADMIN_SESSION_KEY));
-                    const timestamp = new Date().getTime();
-                    const response = await fetch(`${GAS_URL}?action=updateItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&id=${encodeURIComponent(itemId)}&category=${encodeURIComponent(formValues.category)}&name=${encodeURIComponent(formValues.name)}&price=${encodeURIComponent(formValues.price)}&token=${encodeURIComponent(session.token)}&_t=${timestamp}`, {
-                        method: 'GET',
-                        cache: 'no-cache',
-                        headers: {
-                            'Cache-Control': 'no-cache',
-                            'Pragma': 'no-cache'
-                        }
-                    });
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        Swal.fire('成功', '品項已更新', 'success');
-                        await loadItems();
-                    } else {
-                        throw new Error(data.error || '更新失敗');
-                    }
-                } catch (error) {
-                    Swal.fire('錯誤', '更新品項失敗：' + error.message, 'error');
-                }
-            }
-        }
-
-        // 刪除品項
-        async function deleteItem(itemId) {
-            const result = await Swal.fire({
-                title: '確認刪除',
-                text: '確定要刪除此品項嗎？',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '刪除',
-                cancelButtonText: '取消'
-            });
-
-            if (result.isConfirmed) {
-                if (!checkAuth()) return;
-                
-                const sheetsUrl = localStorage.getItem(SHEETS_URL_KEY);
-                try {
-                    const session = JSON.parse(sessionStorage.getItem(ADMIN_SESSION_KEY));
-                    const timestamp = new Date().getTime();
-                    const response = await fetch(`${GAS_URL}?action=deleteItem&sheetsUrl=${encodeURIComponent(sheetsUrl)}&id=${encodeURIComponent(itemId)}&token=${encodeURIComponent(session.token)}&_t=${timestamp}`, {
-                        method: 'GET',
-                        cache: 'no-cache',
-                        headers: {
-                            'Cache-Control': 'no-cache',
-                            'Pragma': 'no-cache'
-                        }
-                    });
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        Swal.fire('成功', '品項已刪除', 'success');
-                        await loadItems();
-                    } else {
-                        throw new Error(data.error || '刪除失敗');
-                    }
-                } catch (error) {
-                    Swal.fire('錯誤', '刪除品項失敗：' + error.message, 'error');
-                }
-            }
-        }
-
-        // 計算金額
+        // ============ 計算金額 ============
         function calculateAmount() {
-            let rows = document.querySelectorAll("tbody tr");
+            let rows = document.querySelectorAll("#products-table tr");
             let total = 0;
             let orders = [];
-    
+
             rows.forEach(row => {
                 let quantityInput = row.querySelector(".quantity");
                 if (quantityInput) {
-                    let quantity = parseInt(quantityInput.value, 10);
+                    let quantity = parseInt(quantityInput.value, 10) || 0;
                     let price = parseInt(quantityInput.getAttribute("data-price"), 10);
+                    let name = quantityInput.getAttribute("data-name");
                     let amount = quantity * price;
-    
-                    const amountCell = row.querySelector(".amount");
-                    if (amountCell) {
-                        amountCell.innerText = amount;
-                    }
+
+                    row.querySelector(".amount").innerText = amount;
                     total += amount;
-    
+
                     if (quantity > 0) {
-                        orders.push(`${row.cells[0].innerText} x ${quantity} (${amount}元)`);
+                        orders.push(`${name} x ${quantity} (${amount}元)`);
                     }
                 }
             });
-    
+
             document.getElementById("total-price").innerText = `總金額: $${total}`;
             return { orders, total };
         }
-    
-        // 送出訂單
-        function submitOrder() {
+
+        // ============ 提交訂單 ============
+        async function submitOrder() {
             let orderData = calculateAmount();
             let lineName = document.getElementById("line-name").value.trim();
             let contactPhone = document.getElementById("contact-phone").value.trim();
@@ -625,42 +224,75 @@
                 return;
             }
 
+            if (orderData.orders.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '錯誤',
+                    text: '請至少選擇一項商品！'
+                });
+                return;
+            }
+
             let orderSummary = `LINE顯示名稱: ${lineName}
-    聯絡電話: ${contactPhone}
+聯絡電話: ${contactPhone}
 
-    訂單內容:
-    ${orderData.orders.join("\n")}
+訂單內容:
+${orderData.orders.join("\n")}
 
-    總金額: $${orderData.total}`.replace(/\n/g, "<br>");
+總金額: $${orderData.total}`.replace(/\n/g, "<br>");
 
-            Swal.fire({
+            const result = await Swal.fire({
                 title: '確認訂單',
                 html: orderSummary,
                 icon: 'info',
                 showCancelButton: true,
                 confirmButtonText: '確認送出',
                 cancelButtonText: '取消'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    let queryString = `?lineName=${encodeURIComponent(lineName)}&contactPhone=${encodeURIComponent(contactPhone)}&total=${orderData.total}&orders=${encodeURIComponent(orderData.orders.join("\n"))}`;
-
-                    fetch(GAS_URL + queryString, { method: "GET" })
-                    .then(response => response.text())
-                    .then(data => {
-                        Swal.fire('成功！', '訂單已送出！', 'success');
-                        // 清空表單
-                        document.getElementById("line-name").value = '';
-                        document.getElementById("contact-phone").value = '';
-                        document.querySelectorAll(".quantity").forEach(input => input.value = '0');
-                        calculateAmount();
-                    })
-                    .catch(error => {
-                        Swal.fire('錯誤', '送出失敗：' + error, 'error');
-                    });
-                }
             });
+
+            if (!result.isConfirmed) return;
+
+            // 顯示載入中
+            Swal.fire({
+                title: '送出中...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=submitOrder`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        lineName: lineName,
+                        contactPhone: contactPhone,
+                        orders: orderData.orders.join("\n"),
+                        total: orderData.total
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '訂單已送出！',
+                        text: `訂單編號：${data.orderId}`,
+                        confirmButtonText: '確定'
+                    }).then(() => {
+                        // 重置表單
+                        document.querySelectorAll('.quantity').forEach(input => input.value = '0');
+                        document.querySelectorAll('.amount').forEach(td => td.innerText = '0');
+                        document.getElementById('total-price').innerText = '總金額: $0';
+                    });
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '送出失敗：' + error.message, 'error');
+            }
         }
 
+        // ============ 輔助函數 ============
         function setDefaultValue(input) {
             if (input.value.trim() === '') {
                 input.value = '0';
@@ -670,24 +302,7 @@
         function validateInput(input) {
             input.value = input.value.replace(/[^0-9]/g, '');
         }
-
-        function preventInvalidInput(event) {
-            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
-            if (
-                !allowedKeys.includes(event.key) &&
-                (event.key < '0' || event.key > '9')
-            ) {
-                event.preventDefault();
-            }
-        }
-
-        // 初始化
-        window.addEventListener('DOMContentLoaded', () => {
-            checkAdminMode();
-            if (!isAdminMode) {
-                loadItems();
-            }
-        });
-    </script>      
+    </script>
 </body>
+
 </html>
