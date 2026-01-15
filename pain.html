@@ -241,7 +241,7 @@
         // ============ 載入店家設定 ============
         async function loadStoreSettings() {
             try {
-                const response = await fetch(`${GAS_URL}?action=getSettings`);
+                const response = await fetch(`${GAS_URL}?action=getSettings&_=${new Date().getTime()}`);
                 const result = await response.json();
                 if (result.success) {
                     storeSettings = result.settings;
@@ -283,7 +283,7 @@
         // ============ 載入商品 ============
         async function loadProducts() {
             try {
-                const response = await fetch(`${GAS_URL}?action=getProducts`);
+                const response = await fetch(`${GAS_URL}?action=getProducts&_=${new Date().getTime()}`);
                 const result = await response.json();
 
                 if (result.success) {
