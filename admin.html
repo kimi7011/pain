@@ -421,14 +421,11 @@
         // ==========================================
 
         // 1. Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbzy2nHGfe-kwivBdTYNKE6wTpSe2pQh0T091knP49x28OjuBfzxdALta8BwrgyoPZdlAA/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwnZblTGjqQBJxFF3-HCQrV9XuZXQDjJkHwN22VQ5auzq-v3XHJyhsHrbbIwIf1l-kzaA/exec';
 
         // 2. LINE Login 設定 (必填)
         const LINE_LOGIN_CHANNEL_ID = '2008902569';
         const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/admin.html';
-
-        // 3. 管理員 User ID (必填)
-        const ADMIN_USER_ID = 'U523fe140da9b40fff66ae287f6d4c547';
 
         // ==========================================
         //              以下程式碼請勿修改
@@ -439,6 +436,17 @@
         let categories = [];
         let products = [];
         let orders = [];
+
+        /**
+         * 安全性輔助函數：取得已登入使用者 ID
+         * 若未登入則拋出錯誤
+         */
+        function getAuthUserId() {
+            if (!currentUser || !currentUser.userId) {
+                throw new Error('請先登入');
+            }
+            return currentUser.userId;
+        }
 
         // ============ 初始化 ============
         document.addEventListener('DOMContentLoaded', () => {
@@ -674,7 +682,7 @@
                 const response = await fetch(`${GAS_URL}?action=reorderCategory`, {
                     method: 'POST',
                     body: JSON.stringify({
-                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        userId: getAuthUserId(),
                         id: id,
                         direction: direction
                     })
@@ -703,7 +711,7 @@
                 const response = await fetch(`${GAS_URL}?action=addCategory`, {
                     method: 'POST',
                     body: JSON.stringify({
-                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        userId: getAuthUserId(),
                         name: name
                     })
                 });
@@ -739,7 +747,7 @@
                     const response = await fetch(`${GAS_URL}?action=updateCategory`, {
                         method: 'POST',
                         body: JSON.stringify({
-                            userId: currentUser?.userId || ADMIN_USER_ID,
+                            userId: getAuthUserId(),
                             id: id,
                             name: newName
                         })
@@ -777,7 +785,7 @@
                 const response = await fetch(`${GAS_URL}?action=deleteCategory`, {
                     method: 'POST',
                     body: JSON.stringify({
-                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        userId: getAuthUserId(),
                         id: id
                     })
                 });
@@ -1034,7 +1042,7 @@
 
             // 準備更新資料
             const updateData = {
-                userId: currentUser?.userId || ADMIN_USER_ID,
+                userId: getAuthUserId(),
                 id: id,
                 category: product.category,
                 name: product.name,
@@ -1127,7 +1135,7 @@
         // 通用 API 呼叫函數
         async function callUpdateAPI(productData) {
             const data = {
-                userId: currentUser?.userId || ADMIN_USER_ID,
+                userId: getAuthUserId(),
                 id: productData.id,
                 category: productData.category,
                 name: productData.name,
@@ -1200,7 +1208,7 @@
 
             const id = document.getElementById('product-id').value;
             const data = {
-                userId: currentUser?.userId || ADMIN_USER_ID,
+                userId: getAuthUserId(),
                 id: id,
                 category: document.getElementById('product-category').value,
                 name: document.getElementById('product-name').value,
@@ -1249,7 +1257,7 @@
                 const response = await fetch(`${GAS_URL}?action=deleteProduct`, {
                     method: 'POST',
                     body: JSON.stringify({
-                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        userId: getAuthUserId(),
                         id: id
                     })
                 });
@@ -1272,7 +1280,7 @@
             ordersList.innerHTML = '<p class="text-center py-8 text-gray-500">載入中...</p>';
 
             try {
-                const response = await fetch(`${GAS_URL}?action=getOrders&userId=${ADMIN_USER_ID}&_=${new Date().getTime()}`);
+                const response = await fetch(`${GAS_URL}?action=getOrders&userId=${getAuthUserId()}&_=${new Date().getTime()}`);
                 const result = await response.json();
 
                 if (result.success) {
@@ -1345,7 +1353,7 @@
 
             const orderId = document.getElementById('order-id').value;
             const data = {
-                userId: currentUser?.userId || ADMIN_USER_ID,
+                userId: getAuthUserId(),
                 orderId: orderId,
                 lineName: document.getElementById('order-name').value,
                 phone: document.getElementById('order-phone').value,
@@ -1391,7 +1399,7 @@
                 const response = await fetch(`${GAS_URL}?action=deleteOrder`, {
                     method: 'POST',
                     body: JSON.stringify({
-                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        userId: getAuthUserId(),
                         orderId: orderId
                     })
                 });
@@ -1473,7 +1481,7 @@
                 const response = await fetch(`${GAS_URL}?action=updateSettings`, {
                     method: 'POST',
                     body: JSON.stringify({
-                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        userId: getAuthUserId(),
                         settings: settings
                     })
                 });
@@ -1576,7 +1584,7 @@
                 const response = await fetch(`${GAS_URL}?action=batchUpdateProducts`, {
                     method: 'POST',
                     body: JSON.stringify({
-                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        userId: getAuthUserId(),
                         action: action,
                         productIds: productIds,
                         priceAdjustment: priceAdjustment
@@ -1604,7 +1612,7 @@
                 const response = await fetch(`${GAS_URL}?action=reorderProduct`, {
                     method: 'POST',
                     body: JSON.stringify({
-                        userId: currentUser?.userId || ADMIN_USER_ID,
+                        userId: getAuthUserId(),
                         id: id,
                         direction: direction
                     })
@@ -1621,15 +1629,6 @@
             }
         }
 
-        // ============ 測試用：模擬登入（正式環境請移除）============
-        // 開發階段可以使用此函數測試後台功能
-        function devLogin() {
-            currentUser = {
-                userId: ADMIN_USER_ID,
-                displayName: '測試管理員'
-            };
-            localStorage.setItem('admin_user', JSON.stringify(currentUser));
-            showAdminPage();
-        }
+        // ============ 開發測試功能已移除 ============
     </script>
 </body>
