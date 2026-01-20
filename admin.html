@@ -175,6 +175,14 @@
                 class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
                 黑名單
             </button>
+            <button onclick="showTab('linebots')" id="tab-linebots"
+                class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
+                LINE 帳號管理
+            </button>
+            <button onclick="showTab('users')" id="tab-users"
+                class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
+                用戶管理
+            </button>
             <div class="flex-grow"></div>
             <button onclick="openCategoryManager()"
                 class="px-4 py-2 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 transition text-sm font-medium">
@@ -202,6 +210,86 @@
                     </thead>
                     <tbody id="blacklist-list">
                         <!-- 黑名單將由 JS 載入 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============ LINE 帳號管理區塊 ============ -->
+        <div id="linebots-section" class="glass-card p-6 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-amber-800">LINE Bot 帳號管理</h2>
+                    <p class="text-sm text-gray-500 mt-1">每月 1 號自動重置用量，滿額 (200) 自動切換</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openLineBotModal()"
+                        class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg">
+                        + 新增帳號
+                    </button>
+                    <button onclick="loadLineBots()"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600">
+                        🔄 重新整理
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-amber-200">
+                            <th class="p-3 text-left text-amber-800">狀態</th>
+                            <th class="p-3 text-left text-amber-800">名稱</th>
+                            <th class="p-3 text-left text-amber-800">本月用量</th>
+                            <th class="p-3 text-right text-amber-800">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="linebots-list">
+                        <!-- 帳號列表將由 JS 載入 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============ 用戶管理區塊 ============ -->
+        <div id="users-section" class="glass-card p-6 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-amber-800">平台用戶管理</h2>
+                    <p class="text-sm text-gray-500 mt-1">管理所有登入過的 LINE 用戶與權限指派</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="loadUsers()"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600">
+                        🔄 重新整理
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜尋框 -->
+            <div class="mb-4">
+                <div class="relative">
+                    <input type="text" id="user-search" class="w-full border rounded-lg pl-10 pr-4 py-2"
+                        placeholder="搜尋用戶名稱或 ID..." onkeyup="if(event.key === 'Enter') loadUsers()">
+                    <div class="absolute left-3 top-2.5 text-gray-400">🔍</div>
+                    <button onclick="loadUsers()"
+                        class="absolute right-2 top-1.5 px-3 py-1 bg-amber-600 text-white rounded text-sm hover:bg-amber-700">搜尋</button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-amber-200">
+                            <th class="p-3 text-left text-amber-800" width="80">頭像</th>
+                            <th class="p-3 text-left text-amber-800">用戶資料</th>
+                            <th class="p-3 text-left text-amber-800">角色權限</th>
+                            <th class="p-3 text-left text-amber-800">狀態</th>
+                            <th class="p-3 text-left text-amber-800">最後登入</th>
+                            <th class="p-3 text-right text-amber-800">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-list">
+                        <!-- 用戶列表將由 JS 載入 -->
                     </tbody>
                 </table>
             </div>
@@ -444,16 +532,60 @@
         </div>
     </div>
 
+    <!-- ============ LINE Bot 管理 Modal ============ -->
+    <div id="linebot-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-lg">
+            <h3 class="text-xl font-bold text-amber-800 mb-6" id="linebot-modal-title">新增 LINE 帳號</h3>
+            <form id="linebot-form" onsubmit="saveLineBot(event)">
+                <input type="hidden" id="bot-id">
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">帳號名稱</label>
+                    <input type="text" id="bot-name" class="w-full border rounded-lg p-3" required
+                        placeholder="例如：主要帳號">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Channel Access Token</label>
+                    <input type="text" id="bot-token" class="w-full border rounded-lg p-3" required
+                        placeholder="長效 Token">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">管理員 User ID</label>
+                    <input type="text" id="bot-admin-id" class="w-full border rounded-lg p-3" required
+                        placeholder="接收通知的 User ID">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">當前用量（本月）</label>
+                    <input type="number" id="bot-usage" class="w-full border rounded-lg p-3" required min="0" value="0">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">每月上限</label>
+                    <input type="number" id="bot-limit" class="w-full border rounded-lg p-3" required min="1"
+                        value="200">
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" class="btn-primary flex-1">儲存</button>
+                    <button type="button" onclick="closeLineBotModal()"
+                        class="flex-1 px-6 py-3 bg-gray-200 rounded-lg">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // ==========================================
         //              系統設定區 (請修改此處)
         // ==========================================
 
         // 1. Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz-hxKwXJzZQOAb6XT7NFYZwVtsnUjHg-lmMgvUw_D7a9vT_f9yjkp5aVQbvoES-w0yCw/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyco_QMzOkiK_l4qVxhAvp2ClnJm-0b7OQfSnpa9Mgyx6Qip5ldVXiAMixXFXoa1EP65w/exec';
 
         // 2. LINE Login 設定 (必填)
-        const LINE_LOGIN_CHANNEL_ID = '2008902569';
         const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/admin.html';
 
         // ==========================================
@@ -465,6 +597,7 @@
         let categories = [];
         let products = [];
         let orders = [];
+        let lineBots = [];
 
         /**
          * 安全性輔助函數：取得已登入使用者 ID
@@ -494,22 +627,21 @@
         });
 
         // ============ LINE Login ============
-        function loginWithLine() {
-            const state = generateRandomState();
-            localStorage.setItem('line_login_state', state);
+        async function loginWithLine() {
+            try {
+                // 從後端取得授權 URL（安全性：避免前端暴露 Channel ID）
+                const response = await fetch(`${GAS_URL}?action=getLineLoginUrl&redirectUri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}`);
+                const result = await response.json();
 
-            const authUrl = `https://access.line.me/oauth2/v2.1/authorize?` +
-                `response_type=code&` +
-                `client_id=${LINE_LOGIN_CHANNEL_ID}&` +
-                `redirect_uri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}&` +
-                `state=${state}&` +
-                `scope=profile%20openid`;
-
-            window.location.href = authUrl;
-        }
-
-        function generateRandomState() {
-            return Math.random().toString(36).substring(2, 15);
+                if (result.success) {
+                    localStorage.setItem('line_login_state', result.state);
+                    window.location.href = result.authUrl;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '無法啟動登入流程：' + error.message, 'error');
+            }
         }
 
         async function handleLineCallback(code, state) {
@@ -631,6 +763,10 @@
                 loadSettings();
             } else if (tab === 'blacklist') {
                 loadBlacklist();
+            } else if (tab === 'linebots') {
+                loadLineBots();
+            } else if (tab === 'users') {
+                loadUsers();
             }
         }
 
@@ -1826,5 +1962,425 @@
         }
 
         // ============ 開發測試功能已移除 ============
+        // ============ LINE Bot 管理 ============
+        async function loadLineBots() {
+            try {
+                const response = await fetch(`${GAS_URL}?action=getLineBotSettings&userId=${getAuthUserId()}`);
+                const result = await response.json();
+                if (result.success) {
+                    lineBots = result.bots;
+                    renderLineBots();
+                } else {
+                    Swal.fire('錯誤', result.error, 'error');
+                }
+            } catch (error) {
+                console.error('LINE Bot 載入錯誤', error);
+                Swal.fire('錯誤', '無法載入 LINE Bot 設定', 'error');
+            }
+        }
+
+        function renderLineBots() {
+            const list = document.getElementById('linebots-list');
+            if (lineBots.length === 0) {
+                list.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">尚無帳號</td></tr>';
+                return;
+            }
+
+            let html = '';
+            lineBots.forEach(bot => {
+                const statusClass = bot.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600';
+                const statusText = bot.active ? '使用中' : '備用';
+                const usagePercent = Math.min((bot.usage / bot.limit) * 100, 100).toFixed(1);
+                const usageColor = usagePercent > 90 ? 'text-red-600' : (usagePercent > 70 ? 'text-amber-600' : 'text-green-600');
+
+                html += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td class="p-3 font-medium">${bot.name}</td>
+                        <td class="p-3 text-gray-500 text-sm font-mono">${bot.adminId}</td>
+                        <td class="p-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5 max-w-[100px]">
+                                    <div class="bg-amber-600 h-2.5 rounded-full" style="width: ${usagePercent}%"></div>
+                                </div>
+                                <span class="text-sm ${usageColor} font-medium">${bot.usage || 0} / ${bot.limit}</span>
+                            </div>
+                        </td>
+                        <td class="p-3 text-right">
+                            <div class="flex justify-end gap-2">
+                                ${!bot.active ?
+                        `<button onclick="switchLineBot('${bot.id}')" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">切換使用</button>`
+                        : ''}
+                                <button onclick="openLineBotModal('${bot.id}')" class="text-blue-500 hover:text-blue-700">編輯</button>
+                                ${!bot.active && lineBots.length > 1 ?
+                        `<button onclick="deleteLineBot('${bot.id}')" class="text-red-500 hover:text-red-700">刪除</button>`
+                        : ''}
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+            list.innerHTML = html;
+        }
+
+        function openLineBotModal(botId = null) {
+            document.getElementById('linebot-modal').classList.remove('hidden');
+            const form = document.getElementById('linebot-form');
+            form.reset();
+
+            if (botId) {
+                const bot = lineBots.find(b => b.id === botId);
+                document.getElementById('linebot-modal-title').textContent = '編輯 LINE 帳號';
+                document.getElementById('bot-id').value = bot.id;
+                document.getElementById('bot-name').value = bot.name;
+                document.getElementById('bot-token').value = bot.token;
+                document.getElementById('bot-admin-id').value = bot.adminId;
+                document.getElementById('bot-usage').value = bot.usage || 0;
+                document.getElementById('bot-limit').value = bot.limit || 200;
+            } else {
+                document.getElementById('linebot-modal-title').textContent = '新增 LINE 帳號';
+                document.getElementById('bot-id').value = '';
+                // 預設值
+                document.getElementById('bot-limit').value = 200;
+                document.getElementById('bot-usage').value = 0;
+            }
+        }
+
+        function closeLineBotModal() {
+            document.getElementById('linebot-modal').classList.add('hidden');
+        }
+
+        async function saveLineBot(e) {
+            e.preventDefault();
+
+            const botId = document.getElementById('bot-id').value;
+            const newBot = {
+                id: botId || crypto.randomUUID(), // 需要現代瀏覽器支援，或自定義
+                name: document.getElementById('bot-name').value,
+                token: document.getElementById('bot-token').value,
+                adminId: document.getElementById('bot-admin-id').value,
+                usage: parseInt(document.getElementById('bot-usage').value),
+                limit: parseInt(document.getElementById('bot-limit').value),
+                active: botId ? lineBots.find(b => b.id === botId).active : (lineBots.length === 0)
+            };
+
+            let newBots = [...lineBots];
+            if (botId) {
+                const index = newBots.findIndex(b => b.id === botId);
+                newBots[index] = newBot;
+            } else {
+                newBots.push(newBot);
+            }
+
+            try {
+                // 顯示載入
+                Swal.fire({ title: '儲存中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${GAS_URL}?action=saveLineBotSettings`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        bots: newBots
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.close();
+                    closeLineBotModal();
+                    loadLineBots(); // 重新載入
+                    Swal.fire('成功', '帳號設定已儲存', 'success');
+                } else {
+                    Swal.fire('錯誤', result.error, 'error');
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '儲存失敗：' + error.message, 'error');
+            }
+        }
+
+        async function switchLineBot(botId) {
+            try {
+                Swal.fire({ title: '切換中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${GAS_URL}?action=switchLineBot`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        botId: botId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    await loadLineBots();
+                    Swal.fire('成功', '已切換當前使用的 LINE 帳號', 'success');
+                } else {
+                    Swal.fire('錯誤', result.error, 'error');
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '切換失敗：' + error.message, 'error');
+            }
+        }
+
+        async function deleteLineBot(botId) {
+            Swal.fire({
+                title: '確定刪除？',
+                text: "此操作無法復原！",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: '是的，刪除它'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const newBots = lineBots.filter(b => b.id !== botId);
+
+                    try {
+                        Swal.fire({ title: '刪除中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                        const response = await fetch(`${GAS_URL}?action=saveLineBotSettings`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                userId: getAuthUserId(),
+                                bots: newBots
+                            })
+                        });
+
+                        const res = await response.json();
+
+                        if (res.success) {
+                            Swal.fire('已刪除', '該帳號已刪除', 'success');
+                            loadLineBots();
+                        } else {
+                            Swal.fire('錯誤', res.error, 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('錯誤', '刪除失敗：' + error.message, 'error');
+                    }
+                }
+            });
+        }
+
+
+        // ============ 用戶管理系統 ============
+        let users = [];
+
+        async function loadUsers() {
+            try {
+                const search = document.getElementById('user-search') ? document.getElementById('user-search').value : '';
+                Swal.fire({ title: '載入中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${GAS_URL}?action=getUsers&userId=${getAuthUserId()}&search=${encodeURIComponent(search)}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    users = result.users;
+                    renderUsers();
+                    Swal.close();
+                } else {
+                    Swal.fire('錯誤', result.error, 'error');
+                }
+            } catch (error) {
+                console.error('用戶載入錯誤', error);
+                Swal.fire('錯誤', '無法載入用戶列表', 'error');
+            }
+        }
+
+        function renderUsers() {
+            const list = document.getElementById('users-list');
+            if (users.length === 0) {
+                list.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">無符合條件的用戶</td></tr>';
+                return;
+            }
+
+            const currentUserId = getAuthUserId();
+            // 這裡我們無法在前端直接知道目前用戶是否為 Super Admin，
+            // 但可以透過 ID (如果有硬編碼) 或者後續 API 呼叫的結果來判斷。
+            // 不過我們可以在 API 回傳的 user 物件中增加一個 role 欄位給前端判斷。
+            // 假設 currentUser 已經更新包含 role 資訊 (需要在登入時處理)
+            // 暫時先用目前的權限判斷，所有能進到這頁面的都是 Admin (或 Super Admin)
+            // 但只有 Super Admin 能看到「指派管理員」按鈕。
+
+            // 由於前端沒有嚴格的 Super Admin 標記，我們這裡先檢查是否為該特定 ID
+            // 請注意：這只是 UI 層面的顯示控制，真正的權限檢查在後端
+            // 從 Code.gs 得知 Super Admin ID 是 LINE_ADMIN_USER_ID
+            // 但前端沒有這個變數。我們可以從後端取得，或者假設只有特定 ID 能看。
+            // 為了簡化，我們先顯示按鈕，點擊後後端會驗證。
+
+            let html = '';
+            users.forEach(u => {
+                const isSuperAdmin = (u.role === 'SUPER_ADMIN'); // 雖然 User 表可能沒有這個值，但可以用 ID 判斷
+                const isAdmin = (u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
+                const isBlacklisted = (u.status === 'BLACKLISTED');
+
+                const roleBadge = isAdmin
+                    ? `<span class="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">${u.role}</span>`
+                    : `<span class="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">USER</span>`;
+
+                const statusBadge = isBlacklisted
+                    ? `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">黑名單</span>`
+                    : `<span class="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">正常</span>`;
+
+                const lastLoginDate = u.lastLogin ? new Date(u.lastLogin).toLocaleString('zh-TW') : '無紀錄';
+
+                // 操作按鈕邏輯
+                let actions = '';
+
+                // 黑名單按鈕
+                if (isBlacklisted) {
+                    actions += `<button onclick="toggleUserBlacklist('${u.userId}', false)" class="text-green-600 hover:text-green-800 text-sm mr-2">解除封鎖</button>`;
+                } else {
+                    actions += `<button onclick="toggleUserBlacklist('${u.userId}', true)" class="text-red-500 hover:text-red-700 text-sm mr-2">封鎖</button>`;
+                }
+
+                // 權限指派按鈕 (只有對非 Super Admin 的對象顯示)
+                if (!isSuperAdmin) { // 假設不能更改 Super Admin
+                    if (isAdmin) {
+                        actions += `<button onclick="toggleUserRole('${u.userId}', 'USER')" class="text-xs border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50">移除管理員</button>`;
+                    } else {
+                        actions += `<button onclick="toggleUserRole('${u.userId}', 'ADMIN')" class="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700">設為管理員</button>`;
+                    }
+                }
+
+                html += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">
+                            <img src="${u.pictureUrl || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full border">
+                        </td>
+                        <td class="p-3">
+                            <div class="font-medium text-gray-800">${u.displayName}</div>
+                            <div class="text-xs text-gray-400 font-mono">${u.userId}</div>
+                        </td>
+                        <td class="p-3">${roleBadge}</td>
+                        <td class="p-3">${statusBadge}</td>
+                        <td class="p-3 text-sm text-gray-500">${lastLoginDate}</td>
+                        <td class="p-3 text-right">
+                            ${actions}
+                        </td>
+                    </tr>`;
+            });
+            list.innerHTML = html;
+        }
+
+        async function toggleUserRole(targetUserId, newRole) {
+            Swal.fire({
+                title: `確定要將此用戶設為 ${newRole} 嗎？`,
+                text: newRole === 'ADMIN' ? '該用戶將可以登入後台管理系統。' : '該用戶將失去後台登入權限。',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '確定',
+                cancelButtonText: '取消'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                        const response = await fetch(`${GAS_URL}?action=updateUserRole`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                userId: getAuthUserId(),
+                                targetUserId: targetUserId,
+                                newRole: newRole
+                            })
+                        });
+
+                        const res = await response.json();
+
+                        if (res.success) {
+                            Swal.fire('成功', res.message, 'success');
+                            loadUsers();
+                        } else {
+                            Swal.fire('權限不足或錯誤', res.error, 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('錯誤', '操作失敗：' + error.message, 'error');
+                    }
+                }
+            });
+        }
+
+        async function toggleUserBlacklist(targetUserId, isBlocked) {
+            if (isBlocked) {
+                // 呼叫現有的 blockUser (可能需要微調以支援 ID 傳入，或直接用新 API)
+                // 這裡我們直接呼叫 addToBlacklist，因為我們已經有了對方的 ID
+                // 但現有的 blockUser 是針對訂單操作的。
+                // 我們可以實作一個新的通用封鎖函數，或者直接呼叫後端 API。
+                // 為了簡單，我們直接呼叫後端。
+                Swal.fire({
+                    title: '封鎖用戶',
+                    text: '請輸入封鎖原因：',
+                    input: 'text',
+                    showCancelButton: true,
+                    confirmButtonText: '封鎖',
+                    cancelButtonText: '取消'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        const reason = result.value;
+                        try {
+                            const user = users.find(u => u.userId === targetUserId);
+                            Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                            const response = await fetch(`${GAS_URL}?action=addToBlacklist`, {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    userId: getAuthUserId(),
+                                    lineUserId: targetUserId,
+                                    displayName: user ? user.displayName : '',
+                                    reason: reason
+                                })
+                            });
+
+                            const res = await response.json();
+                            if (res.success) {
+                                Swal.fire('成功', '已封鎖該用戶', 'success');
+                                loadUsers();
+                            } else {
+                                Swal.fire('錯誤', res.error, 'error');
+                            }
+                        } catch (e) {
+                            Swal.fire('錯誤', e.message, 'error');
+                        }
+                    }
+                });
+            } else {
+                // 解除封鎖
+                Swal.fire({
+                    title: '確定解除封鎖？',
+                    text: "該用戶將可以再次下單。",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: '解除封鎖'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                            const response = await fetch(`${GAS_URL}?action=removeFromBlacklist`, {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    userId: getAuthUserId(),
+                                    lineUserId: targetUserId
+                                })
+                            });
+
+                            const res = await response.json();
+                            if (res.success) {
+                                Swal.fire('成功', '已解除封鎖', 'success');
+                                loadUsers();
+                            } else {
+                                Swal.fire('錯誤', res.error, 'error');
+                            }
+                        } catch (e) {
+                            Swal.fire('錯誤', e.message, 'error');
+                        }
+                    }
+                });
+            }
+        }
     </script>
 </body>
