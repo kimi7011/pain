@@ -450,7 +450,7 @@
         // ==========================================
 
         // 1. Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwmnNmGMYw10DYEvrCVupNj3jgjWZW9lmhKHbWBd7dh8B8NEFjVijmxWiT0EVeiE6WazA/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz-hxKwXJzZQOAb6XT7NFYZwVtsnUjHg-lmMgvUw_D7a9vT_f9yjkp5aVQbvoES-w0yCw/exec';
 
         // 2. LINE Login 設定 (必填)
         const LINE_LOGIN_CHANNEL_ID = '2008902569';
@@ -588,12 +588,14 @@
         }
 
         // ============ 頁面顯示 ============
-        function showAdminPage() {
+        async function showAdminPage() {
             document.getElementById('login-page').classList.add('hidden');
             document.getElementById('admin-page').classList.remove('hidden');
             document.getElementById('admin-name').textContent = currentUser.displayName || '管理員';
-            loadCategories(); // 先載入分類
-            loadProducts();
+
+            // 並行載入分類和商品（效能優化）
+            await Promise.all([loadCategories(), loadProducts()]);
+
             showTab('products'); // 確保切換到商品頁籤並顯示底部欄
         }
 
