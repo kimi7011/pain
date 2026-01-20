@@ -181,11 +181,32 @@
             <h2 class="text-2xl font-bold text-amber-800">揉PAin 訂購表單</h2>
         </div>
 
-        <!-- LINE 顯示名稱與聯絡電話輸入框 -->
-        <div class="mb-4">
-            <label class="block text-amber-800 font-medium mb-2">LINE顯示名稱：</label>
-            <input type="text" id="line-name" class="w-full input-field p-3" placeholder="請輸入您的LINE顯示名稱">
+        <!-- LINE 登入區塊 -->
+        <div id="login-section" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+            <div id="login-prompt" class="text-center">
+                <p class="text-gray-600 mb-3">請先使用 LINE 帳號登入才能訂購</p>
+                <button onclick="loginWithLine()"
+                    class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                    </svg>
+                    使用 LINE 登入
+                </button>
+            </div>
+            <div id="user-info" class="hidden flex items-center gap-3">
+                <img id="user-avatar" src="" alt="頭像" class="w-12 h-12 rounded-full border-2 border-green-300">
+                <div class="flex-1">
+                    <p class="text-sm text-gray-500">已登入</p>
+                    <p id="user-display-name" class="font-semibold text-gray-700"></p>
+                </div>
+                <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-500">登出</button>
+            </div>
         </div>
+
+        <!-- LINE 顯示名稱（隱藏，用於表單提交） -->
+        <input type="hidden" id="line-name">
+
         <div class="mb-6">
             <label class="block text-amber-800 font-medium mb-2">聯絡電話：</label>
             <input type="tel" id="contact-phone" class="w-full input-field p-3" placeholder="請輸入您的聯絡電話">
@@ -222,7 +243,11 @@
         // ==========================================
 
         // Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz6HZD3EURwxKfgO62UCgkDlhb_p6reyu4SdFWSk6VEjYzC3-l1Ln2CP_UE2CIS4FU9iQ/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwsu685Cwf-uvyl40BBIQdvrXaqW61OSNJKw322g7QDJDT5b8oQAXRdYOU92E33b2T9Bg/exec';
+
+        // LINE Login 設定
+        const LINE_LOGIN_CHANNEL_ID = '2008902569';
+        const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/pain.html';
 
         // ==========================================
         //              以下程式碼請勿修改
@@ -231,12 +256,135 @@
         let products = [];
         let categories = [];
         let storeSettings = {};
+        let currentUser = null; // 儲存登入的用戶資訊
 
         // ============ 初始化 ============
         document.addEventListener('DOMContentLoaded', async () => {
+            // 檢查 URL 是否有 LINE Login 回傳的 code
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+
+            if (code) {
+                // 從 LINE Login 返回
+                await handleLineCallback(code, state);
+            } else {
+                // 檢查是否已登入（從 localStorage）
+                checkLoginStatus();
+            }
+
             await loadStoreSettings();
             loadProducts();
+            updateFormState();
         });
+
+        // ============ LINE Login ============
+        function loginWithLine() {
+            const state = generateRandomState();
+            localStorage.setItem('pain_line_login_state', state);
+
+            const authUrl = `https://access.line.me/oauth2/v2.1/authorize?` +
+                `response_type=code&` +
+                `client_id=${LINE_LOGIN_CHANNEL_ID}&` +
+                `redirect_uri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}&` +
+                `state=${state}&` +
+                `scope=profile%20openid`;
+
+            window.location.href = authUrl;
+        }
+
+        function generateRandomState() {
+            return Math.random().toString(36).substring(2, 15);
+        }
+
+        async function handleLineCallback(code, state) {
+            const savedState = localStorage.getItem('pain_line_login_state');
+            localStorage.removeItem('pain_line_login_state');
+
+            if (!savedState || state !== savedState) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '驗證失敗',
+                    text: '請重新登入',
+                    confirmButtonText: '確定'
+                });
+                window.history.replaceState({}, document.title, 'pain.html');
+                return;
+            }
+
+            Swal.fire({
+                title: '登入驗證中...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const response = await fetch(
+                    `${GAS_URL}?action=customerLineLogin&code=${encodeURIComponent(code)}&redirectUri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}`
+                );
+                const result = await response.json();
+
+                window.history.replaceState({}, document.title, 'pain.html');
+
+                if (result.success) {
+                    currentUser = result.user;
+                    localStorage.setItem('pain_user', JSON.stringify(currentUser));
+                    showUserInfo();
+                    Swal.close();
+                } else {
+                    throw new Error(result.error || '登入失敗');
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '登入失敗',
+                    text: error.message
+                });
+            }
+        }
+
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('pain_user');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    showUserInfo();
+                } catch (e) {
+                    localStorage.removeItem('pain_user');
+                }
+            }
+        }
+
+        function showUserInfo() {
+            document.getElementById('login-prompt').classList.add('hidden');
+            document.getElementById('user-info').classList.remove('hidden');
+            document.getElementById('user-display-name').textContent = currentUser.displayName;
+            document.getElementById('user-avatar').src = currentUser.pictureUrl || 'https://via.placeholder.com/48';
+            document.getElementById('line-name').value = currentUser.displayName;
+            updateFormState();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('pain_user');
+            document.getElementById('login-prompt').classList.remove('hidden');
+            document.getElementById('user-info').classList.add('hidden');
+            document.getElementById('line-name').value = '';
+            updateFormState();
+        }
+
+        function updateFormState() {
+            const submitBtn = document.querySelector('.btn-submit');
+            if (!currentUser) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitBtn.title = '請先登入 LINE 帳號';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.title = '';
+            }
+        }
 
         // ============ 載入店家設定 ============
         async function loadStoreSettings() {
@@ -431,15 +579,26 @@
 
         // ============ 提交訂單 ============
         async function submitOrder() {
+            // 檢查是否已登入
+            if (!currentUser) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '請先登入',
+                    text: '請使用 LINE 帳號登入後再送出訂單',
+                    confirmButtonText: '確定'
+                });
+                return;
+            }
+
             let orderData = calculateAmount();
             let lineName = document.getElementById("line-name").value.trim();
             let contactPhone = document.getElementById("contact-phone").value.trim();
 
-            if (!lineName || !contactPhone) {
+            if (!contactPhone) {
                 Swal.fire({
                     icon: 'error',
                     title: '錯誤',
-                    text: '請填寫 LINE 顯示名稱與聯絡電話！'
+                    text: '請填寫聯絡電話！'
                 });
                 return;
             }
@@ -486,7 +645,8 @@ ${orderData.orders.join("\n")}
                         lineName: lineName,
                         contactPhone: contactPhone,
                         orders: orderData.orders.join("\n"),
-                        total: orderData.total
+                        total: orderData.total,
+                        lineUserId: currentUser?.userId || ''  // 新增：傳送用戶 ID
                     })
                 });
 
