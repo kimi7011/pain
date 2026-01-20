@@ -260,7 +260,7 @@
         // ==========================================
 
         // Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwmnNmGMYw10DYEvrCVupNj3jgjWZW9lmhKHbWBd7dh8B8NEFjVijmxWiT0EVeiE6WazA/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz-hxKwXJzZQOAb6XT7NFYZwVtsnUjHg-lmMgvUw_D7a9vT_f9yjkp5aVQbvoES-w0yCw/exec';
 
         // LINE Login 設定
         const LINE_LOGIN_CHANNEL_ID = '2008902569';
@@ -290,10 +290,36 @@
                 checkLoginStatus();
             }
 
-            await loadStoreSettings();
-            loadProducts();
+            // 使用合併 API 一次載入所有資料（效能優化）
+            await loadInitData();
             updateFormState();
         });
+
+        // ============ 合併載入（效能優化）============
+        async function loadInitData() {
+            try {
+                const response = await fetch(`${GAS_URL}?action=getInitData&_=${new Date().getTime()}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    products = result.products.filter(p => p.enabled);
+                    categories = result.categories;
+                    storeSettings = result.settings;
+                    applyStoreSettings();
+                    renderProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('products-table').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-red-600">
+                            載入失敗：${error.message}<br>
+                            <button onclick="loadInitData()" class="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition">重試</button>
+                        </td>
+                    </tr>`;
+            }
+        }
 
         // ============ LINE Login ============
         function loginWithLine() {
