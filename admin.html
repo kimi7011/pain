@@ -421,7 +421,7 @@
         // ==========================================
 
         // 1. Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz6HZD3EURwxKfgO62UCgkDlhb_p6reyu4SdFWSk6VEjYzC3-l1Ln2CP_UE2CIS4FU9iQ/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwsu685Cwf-uvyl40BBIQdvrXaqW61OSNJKw322g7QDJDT5b8oQAXRdYOU92E33b2T9Bg/exec';
 
         // 2. LINE Login 設定 (必填)
         const LINE_LOGIN_CHANNEL_ID = '2008902569';
@@ -1319,9 +1319,11 @@
                         <div class="text-gray-600">
                             <p><span class="font-medium">顧客：</span>${order.lineName}</p>
                             <p><span class="font-medium">電話：</span>${order.phone}</p>
+                            ${order.lineUserId ? `<p class="text-xs text-gray-400">User ID: ${order.lineUserId.substring(0, 10)}...</p>` : ''}
                             <p class="mt-2 text-sm whitespace-pre-line bg-gray-50 p-3 rounded">${order.items}</p>
                         </div>
                         <div class="mt-3 flex justify-end gap-3">
+                            ${order.lineUserId ? `<button onclick="blockUser('${order.lineUserId}', '${order.lineName}')" class="text-orange-500 hover:text-orange-700 font-medium">封鎖</button>` : ''}
                             <button onclick="editOrder('${order.orderId}')" class="text-blue-500 hover:text-blue-700 font-medium">編輯</button>
                             <button onclick="deleteOrder('${order.orderId}')" class="text-red-500 hover:text-red-700 font-medium">刪除</button>
                         </div>
@@ -1408,6 +1410,44 @@
                 if (data.success) {
                     Swal.fire('成功', '訂單已刪除', 'success');
                     loadOrders(); // 重新載入列表
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        // ============ 黑名單功能 ============
+        async function blockUser(lineUserId, displayName) {
+            const { value: reason } = await Swal.fire({
+                title: '封鎖用戶',
+                text: `確定要封鎖「${displayName}」嗎？`,
+                input: 'text',
+                inputLabel: '封鎖原因（選填）',
+                inputPlaceholder: '輸入封鎖原因...',
+                showCancelButton: true,
+                confirmButtonText: '確定封鎖',
+                confirmButtonColor: '#ef4444',
+                cancelButtonText: '取消'
+            });
+
+            if (reason === undefined) return; // 使用者取消
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=addToBlacklist`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        lineUserId: lineUserId,
+                        displayName: displayName,
+                        reason: reason || ''
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('成功', `已將「${displayName}」加入黑名單`, 'success');
                 } else {
                     throw new Error(data.error);
                 }
