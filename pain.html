@@ -200,6 +200,8 @@
                     <p class="text-sm text-gray-500">已登入</p>
                     <p id="user-display-name" class="font-semibold text-gray-700"></p>
                 </div>
+                <button onclick="showMyOrders()" class="text-sm text-amber-600 hover:text-amber-800 font-medium">📋
+                    我的訂單</button>
                 <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-500">登出</button>
             </div>
         </div>
@@ -237,13 +239,28 @@
         </div>
     </div>
 
+    <!-- 我的訂單彈窗 -->
+    <div id="my-orders-modal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-amber-800">📋 我的訂單記錄</h3>
+                <button onclick="closeMyOrdersModal()"
+                    class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="my-orders-list" class="flex-1 overflow-y-auto p-4">
+                <!-- 訂單將由 JS 載入 -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==========================================
         //              系統設定區 (請修改此處)
         // ==========================================
 
         // Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwsu685Cwf-uvyl40BBIQdvrXaqW61OSNJKw322g7QDJDT5b8oQAXRdYOU92E33b2T9Bg/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwmnNmGMYw10DYEvrCVupNj3jgjWZW9lmhKHbWBd7dh8B8NEFjVijmxWiT0EVeiE6WazA/exec';
 
         // LINE Login 設定
         const LINE_LOGIN_CHANNEL_ID = '2008902569';
@@ -384,6 +401,69 @@
                 submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 submitBtn.title = '';
             }
+        }
+
+        // ============ 我的訂單功能 ============
+        let myOrders = [];
+
+        function showMyOrders() {
+            if (!currentUser) {
+                Swal.fire('請先登入', '登入後即可查詢訂單記錄', 'info');
+                return;
+            }
+            document.getElementById('my-orders-modal').classList.remove('hidden');
+            loadMyOrders();
+        }
+
+        function closeMyOrdersModal() {
+            document.getElementById('my-orders-modal').classList.add('hidden');
+        }
+
+        async function loadMyOrders() {
+            const listContainer = document.getElementById('my-orders-list');
+            listContainer.innerHTML = '<p class="text-center text-gray-500 py-8">載入中...</p>';
+
+            try {
+                const response = await fetch(`${GAS_URL}?action=getMyOrders&lineUserId=${currentUser.userId}&_=${new Date().getTime()}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    myOrders = result.orders;
+                    renderMyOrders();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                listContainer.innerHTML = `<p class="text-center text-red-500 py-8">載入失敗: ${error.message}</p>`;
+            }
+        }
+
+        function renderMyOrders() {
+            const listContainer = document.getElementById('my-orders-list');
+
+            if (!myOrders || myOrders.length === 0) {
+                listContainer.innerHTML = '<p class="text-center text-gray-500 py-8">尚無訂單記錄</p>';
+                return;
+            }
+
+            let html = '';
+            myOrders.forEach(order => {
+                const date = new Date(order.timestamp);
+                const dateStr = date.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+                html += `
+                    <div class="border border-gray-200 rounded-xl p-4 mb-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-amber-700 font-bold">#${order.orderId}</span>
+                            <span class="text-xs text-gray-500">${dateStr}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 whitespace-pre-line bg-gray-50 p-3 rounded mb-2">${escapeHtml(order.items)}</div>
+                        <div class="text-right font-bold text-amber-800">$${order.total}</div>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = html;
         }
 
         // ============ 載入店家設定 ============
