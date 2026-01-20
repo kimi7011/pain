@@ -260,10 +260,9 @@
         // ==========================================
 
         // Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz-hxKwXJzZQOAb6XT7NFYZwVtsnUjHg-lmMgvUw_D7a9vT_f9yjkp5aVQbvoES-w0yCw/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyco_QMzOkiK_l4qVxhAvp2ClnJm-0b7OQfSnpa9Mgyx6Qip5ldVXiAMixXFXoa1EP65w/exec';
 
         // LINE Login 設定
-        const LINE_LOGIN_CHANNEL_ID = '2008902569';
         const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/pain.html';
 
         // ==========================================
@@ -322,22 +321,21 @@
         }
 
         // ============ LINE Login ============
-        function loginWithLine() {
-            const state = generateRandomState();
-            localStorage.setItem('pain_line_login_state', state);
+        async function loginWithLine() {
+            try {
+                // 從後端取得授權 URL（安全性：避免前端暴露 Channel ID）
+                const response = await fetch(`${GAS_URL}?action=getLineLoginUrl&redirectUri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}`);
+                const result = await response.json();
 
-            const authUrl = `https://access.line.me/oauth2/v2.1/authorize?` +
-                `response_type=code&` +
-                `client_id=${LINE_LOGIN_CHANNEL_ID}&` +
-                `redirect_uri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}&` +
-                `state=${state}&` +
-                `scope=profile%20openid`;
-
-            window.location.href = authUrl;
-        }
-
-        function generateRandomState() {
-            return Math.random().toString(36).substring(2, 15);
+                if (result.success) {
+                    localStorage.setItem('pain_line_login_state', result.state);
+                    window.location.href = result.authUrl;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '無法啟動登入流程：' + error.message, 'error');
+            }
         }
 
         async function handleLineCallback(code, state) {
