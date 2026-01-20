@@ -222,7 +222,7 @@
         // ==========================================
 
         // Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwnZblTGjqQBJxFF3-HCQrV9XuZXQDjJkHwN22VQ5auzq-v3XHJyhsHrbbIwIf1l-kzaA/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz6HZD3EURwxKfgO62UCgkDlhb_p6reyu4SdFWSk6VEjYzC3-l1Ln2CP_UE2CIS4FU9iQ/exec';
 
         // ==========================================
         //              以下程式碼請勿修改
@@ -316,6 +316,17 @@
             }
         }
 
+        // ============ 安全性輔助函數 ============
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#x27;');
+        }
+
         // ============ 渲染商品 ============
         function renderProducts() {
             const tbody = document.getElementById('products-table');
@@ -345,10 +356,11 @@
             let html = '';
             sortedCategories.forEach(category => {
                 const items = grouped[category];
-                // 分類標題
+                // 分類標題（使用 escapeHtml 防止 XSS）
+                const safeCategory = escapeHtml(category);
                 html += `
                     <tr class="category-header">
-                        <th class="p-2 text-left font-semibold">${category}</th>
+                        <th class="p-2 text-left font-semibold">${safeCategory}</th>
                         <th class="p-2">數量</th>
                         <th class="p-2">價格</th>
                         <th class="p-2">金額</th>
@@ -356,7 +368,9 @@
 
                 // 商品列
                 items.forEach(p => {
-                    const displayName = p.note ? `${p.name} ${p.note}` : p.name;
+                    const safeName = escapeHtml(p.name);
+                    const safeNote = escapeHtml(p.note);
+                    const displayName = safeNote ? `${safeName} ${safeNote}` : safeName;
                     html += `
                         <tr class="product-row text-center border-b border-amber-100">
                             <td class="p-2 text-left text-gray-700">${displayName}</td>
@@ -369,7 +383,7 @@
                                         inputmode="numeric"
                                         class="quantity w-12 text-center p-1 bg-transparent border-0 focus:ring-0 font-medium text-lg text-amber-900" 
                                         data-price="${p.price}"
-                                        data-name="${p.name}"
+                                        data-name="${safeName}"
                                         value="0" 
                                         min="0" 
                                         onfocus="this.select()"
