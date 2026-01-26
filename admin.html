@@ -613,7 +613,7 @@
         // ==========================================
 
         // 1. Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycby1Bezw8D-_nXOO1Po4S5jnSIXCWXbjFbwsPyZQ_JL_DUmuhfrQKrBUhRCSD2QLl3NIKQ/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyoZXPwF1zOVWm2Aeum4mMWfvHhXWs4kPS1Z-a-2oneJSCT0nrjCLTH4tEn4d88cmMSPQ/exec';
 
         // 2. LINE Login 設定 (必填)
         const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/admin.html';
@@ -1402,8 +1402,8 @@
             document.getElementById('product-modal').classList.add('hidden');
         }
 
-        async function saveProduct(event) {
-            event.preventDefault();
+        async function saveProduct(event, force = false) {
+            if (event) event.preventDefault();
 
             const id = document.getElementById('product-id').value;
             const data = {
@@ -1413,13 +1413,16 @@
                 name: document.getElementById('product-name').value,
                 price: document.getElementById('product-price').value,
                 note: document.getElementById('product-note').value,
-                enabled: document.getElementById('product-enabled').checked
+                enabled: document.getElementById('product-enabled').checked,
+                force: force // 新增強制參數
             };
 
             const action = id ? 'updateProduct' : 'addProduct';
 
             try {
-                Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                if (!force) {
+                    Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                }
 
                 const response = await fetch(`${GAS_URL}?action=${action}`, {
                     method: 'POST',
@@ -1431,6 +1434,20 @@
                     Swal.fire('成功', result.message, 'success');
                     closeModal();
                     loadProducts();
+                } else if (result.isDuplicate) {
+                    // 處理重複商品確認
+                    const confirmResult = await Swal.fire({
+                        title: '商品名稱重複',
+                        text: '已經有相同名稱的商品了，確定要繼續新增嗎？',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: '確定新增',
+                        cancelButtonText: '取消'
+                    });
+
+                    if (confirmResult.isConfirmed) {
+                        saveProduct(null, true); // 強制新增
+                    }
                 } else {
                     throw new Error(result.error);
                 }
