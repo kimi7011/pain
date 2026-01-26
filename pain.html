@@ -260,7 +260,7 @@
         // ==========================================
 
         // Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyMNx6PQhsW3txvW9_k4DfB_vHQ1gLe__srXKiOvqHvN7PqjtlTZ0BfC6tkqugxgf7bxA/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwjnkIEbHbsBjwPKEPwciHfYj9joy6G74yA0H0Khjs2h3WD0ftKioaCxfWHjRkoLt0TGA/exec';
 
         // LINE Login 設定
         const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/pain.html';
@@ -372,6 +372,18 @@
                     localStorage.setItem('pain_user', JSON.stringify(currentUser));
                     showUserInfo();
                     Swal.close();
+                } else if (result.isBlacklisted) {
+                    // 顯示封鎖訊息
+                    Swal.fire({
+                        icon: 'error',
+                        title: '帳號已被封鎖',
+                        html: `
+                            <p class="mb-2">您的帳號已被停權，無法使用訂購功能。</p>
+                            <p class="text-sm text-gray-500">封鎖原因：<strong>${result.reason}</strong></p>
+                            ${result.blockedAt ? `<p class="text-xs text-gray-400 mt-2">封鎖時間：${result.blockedAt}</p>` : ''}
+                        `,
+                        confirmButtonText: '了解'
+                    });
                 } else {
                     throw new Error(result.error || '登入失敗');
                 }
