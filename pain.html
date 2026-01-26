@@ -260,7 +260,7 @@
         // ==========================================
 
         // Google Apps Script 部署網址 (必填)
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwjnkIEbHbsBjwPKEPwciHfYj9joy6G74yA0H0Khjs2h3WD0ftKioaCxfWHjRkoLt0TGA/exec';
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbwq9H0TxzlHPiKGZcBK7JVOMxvjcSS71SvOOmS7wmCIuSCsTGef_E2GslFrt6iasxPx4g/exec';
 
         // LINE Login 設定
         const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/pain.html';
@@ -414,6 +414,12 @@
             document.getElementById('user-display-name').textContent = currentUser.displayName;
             document.getElementById('user-avatar').src = currentUser.pictureUrl || 'https://via.placeholder.com/48';
             document.getElementById('line-name').value = currentUser.displayName;
+
+            // 自動帶入電話
+            if (currentUser.phone) {
+                document.getElementById('contact-phone').value = currentUser.phone;
+            }
+
             updateFormState();
         }
 
