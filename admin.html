@@ -358,18 +358,15 @@
                 <h3 class="text-lg font-semibold text-amber-700 mb-4">📍 營業狀態</h3>
                 <div class="flex gap-4 mb-4">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="is_open" value="auto" class="w-4 h-4 accent-amber-600"
-                            onchange="saveSettingsDebounced()">
+                        <input type="radio" name="is_open" value="auto" class="w-4 h-4 accent-amber-600">
                         <span>依營業時間自動</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="is_open" value="open" class="w-4 h-4 accent-green-600"
-                            onchange="saveSettingsDebounced()">
+                        <input type="radio" name="is_open" value="open" class="w-4 h-4 accent-green-600">
                         <span class="text-green-600 font-medium">強制營業中</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="is_open" value="closed" class="w-4 h-4 accent-red-600"
-                            onchange="saveSettingsDebounced()">
+                        <input type="radio" name="is_open" value="closed" class="w-4 h-4 accent-red-600">
                         <span class="text-red-600 font-medium">強制休息中</span>
                     </label>
                 </div>
@@ -383,12 +380,12 @@
                     <label class="flex flex-col gap-1">
                         <span class="text-gray-600">開始時間</span>
                         <input type="datetime-local" id="business_period_start"
-                            class="px-3 py-2 border rounded-lg w-full" onchange="saveSettingsDebounced()">
+                            class="px-3 py-2 border rounded-lg w-full">
                     </label>
                     <label class="flex flex-col gap-1">
                         <span class="text-gray-600">結束時間</span>
-                        <input type="datetime-local" id="business_period_end" class="px-3 py-2 border rounded-lg w-full"
-                            onchange="saveSettingsDebounced()">
+                        <input type="datetime-local" id="business_period_end"
+                            class="px-3 py-2 border rounded-lg w-full">
                     </label>
                 </div>
                 <p class="text-sm text-gray-500">設定開放訂購的完整日期與時間區間。</p>
@@ -399,13 +396,12 @@
                 <h3 class="text-lg font-semibold text-amber-700 mb-4">📢 公告設定</h3>
                 <div class="flex items-center gap-4 mb-4">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="announcement_enabled" class="w-4 h-4 accent-amber-600"
-                            onchange="saveSettingsDebounced()">
+                        <input type="checkbox" id="announcement_enabled" class="w-4 h-4 accent-amber-600">
                         <span>啟用公告</span>
                     </label>
                 </div>
                 <textarea id="announcement" class="w-full p-3 border rounded-lg resize-none" rows="3"
-                    placeholder="輸入要顯示在點餐頁面頂部的公告內容..." onblur="saveSettingsDebounced()"></textarea>
+                    placeholder="輸入要顯示在點餐頁面頂部的公告內容..."></textarea>
                 <p class="text-sm text-gray-500 mt-2">公告會顯示在點餐頁面的最上方，可用於公布寄送日期、活動通知等。</p>
             </div>
 
@@ -416,8 +412,7 @@
                     <label class="flex items-center gap-2">
                         <span class="text-gray-600">同一帳號送單間隔</span>
                         <input type="number" id="order_interval_minutes"
-                            class="w-20 px-3 py-2 border rounded-lg text-center" min="0" max="60" value="5"
-                            onchange="saveSettingsDebounced()">
+                            class="w-20 px-3 py-2 border rounded-lg text-center" min="0" max="60" value="5">
                         <span class="text-gray-600">分鐘</span>
                     </label>
                 </div>
