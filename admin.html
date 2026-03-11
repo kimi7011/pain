@@ -1,0 +1,2502 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>揉PAin 後台管理</title>
+    <link rel="icon" type="image/png" href="pain.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #8B5A2B;
+            --primary-dark: #6B4423;
+            --secondary: #F5E6D3;
+            --accent: #D4A574;
+        }
+
+        body {
+            background: linear-gradient(135deg, #F5E6D3 0%, #E8D4C4 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(139, 90, 43, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5A2B 0%, #6B4423 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(139, 90, 43, 0.4);
+        }
+
+        .btn-line {
+            background: #00B900;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-line:hover {
+            background: #009900;
+            transform: translateY(-2px);
+        }
+
+        .product-row {
+            transition: all 0.2s ease;
+        }
+
+        .product-row:hover {
+            background: rgba(212, 165, 116, 0.1);
+        }
+
+        .tab-active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 底部固定欄 */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 24px;
+            box-shadow: 0 -4px 20px rgba(139, 90, 43, 0.1);
+            display: flex;
+            justify-content: flex-end;
+            /* 預設靠右 */
+            align-items: center;
+            z-index: 50;
+            border-top: 1px solid rgba(139, 90, 43, 0.2);
+        }
+
+        /* 預留底部空間給固定欄 */
+        .content-spacer {
+            height: 80px;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+    <!-- ============ 登入頁面 ============ -->
+    <div id="login-page" class="flex items-center justify-center min-h-screen">
+        <div class="glass-card p-8 text-center max-w-md w-full">
+            <div class="text-6xl mb-4">🍞</div>
+            <h1 class="text-3xl font-bold text-amber-800 mb-2">揉PAin</h1>
+            <p class="text-gray-600 mb-8">後台管理系統</p>
+
+            <button onclick="loginWithLine()" class="btn-line mx-auto">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12 2C6.48 2 2 5.82 2 10.5c0 4.13 3.67 7.6 8.62 8.35.34.07.79.22.91.5.11.26.07.66.03.92l-.15.9c-.04.26-.2 1.01.89.55s5.9-3.47 8.05-5.94C21.85 13.17 22 11.88 22 10.5 22 5.82 17.52 2 12 2z" />
+                </svg>
+                使用 LINE 登入
+            </button>
+
+            <p class="text-sm text-gray-500 mt-6">僅限授權管理員登入</p>
+        </div>
+    </div>
+
+    <!-- ============ 主要管理頁面 ============ -->
+    <div id="admin-page" class="hidden max-w-6xl mx-auto">
+        <!-- 頂部導航 -->
+        <div class="glass-card p-4 mb-6 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">🍞</span>
+                <div>
+                    <h1 class="text-xl font-bold text-amber-800">揉PAin 後台</h1>
+                    <p class="text-sm text-gray-500" id="admin-name">管理員</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="text-gray-500 hover:text-red-500 transition">
+                登出
+            </button>
+        </div>
+
+        <!-- 標籤頁 -->
+        <div class="flex gap-2 mb-6 items-center flex-wrap">
+            <button onclick="showTab('products')" id="tab-products" class="px-6 py-3 rounded-lg font-medium tab-active">
+                商品管理
+            </button>
+            <button onclick="showTab('orders')" id="tab-orders"
+                class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
+                訂單查看
+            </button>
+            <button onclick="showTab('settings')" id="tab-settings"
+                class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
+                店家設定
+            </button>
+            <button onclick="showTab('blacklist')" id="tab-blacklist"
+                class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
+                黑名單
+            </button>
+            <button onclick="showTab('linebots')" id="tab-linebots"
+                class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
+                LINE 帳號管理
+            </button>
+            <button onclick="showTab('users')" id="tab-users"
+                class="px-6 py-3 rounded-lg font-medium bg-white text-gray-600">
+                用戶管理
+            </button>
+            <div class="flex-grow"></div>
+            <button onclick="openCategoryManager()"
+                class="px-4 py-2 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 transition text-sm font-medium">
+                ⚙️ 管理分類
+            </button>
+        </div>
+
+        <!-- 黑名單管理區 -->
+        <div id="blacklist-section" class="glass-card p-6 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-amber-800">黑名單列表</h2>
+                <button onclick="loadBlacklist()" class="text-amber-600 hover:text-amber-800">
+                    🔄 重新整理
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-amber-200">
+                            <th class="text-left p-3 text-amber-800">用戶名稱</th>
+                            <th class="text-left p-3 text-amber-800">封鎖時間</th>
+                            <th class="text-left p-3 text-amber-800">原因</th>
+                            <th class="text-center p-3 text-amber-800">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="blacklist-list">
+                        <!-- 黑名單將由 JS 載入 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============ LINE 帳號管理區塊 ============ -->
+        <div id="linebots-section" class="glass-card p-6 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-amber-800">LINE Bot 帳號管理</h2>
+                    <p class="text-sm text-gray-500 mt-1">每月 1 號自動重置用量，滿額 (200) 自動切換</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openLineBotModal()"
+                        class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg">
+                        + 新增帳號
+                    </button>
+                    <button onclick="loadLineBots()"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600">
+                        🔄 重新整理
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-amber-200">
+                            <th class="p-3 text-left text-amber-800">狀態</th>
+                            <th class="p-3 text-left text-amber-800">名稱</th>
+                            <th class="p-3 text-left text-amber-800">本月用量</th>
+                            <th class="p-3 text-right text-amber-800">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="linebots-list">
+                        <!-- 帳號列表將由 JS 載入 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============ 用戶管理區塊 ============ -->
+        <div id="users-section" class="glass-card p-6 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-amber-800">平台用戶管理</h2>
+                    <p class="text-sm text-gray-500 mt-1">管理所有登入過的 LINE 用戶與權限指派</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="loadUsers()"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600">
+                        🔄 重新整理
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜尋框 -->
+            <div class="mb-4">
+                <div class="relative">
+                    <input type="text" id="user-search" class="w-full border rounded-lg pl-10 pr-4 py-2"
+                        placeholder="搜尋用戶名稱或 ID..." onkeyup="if(event.key === 'Enter') loadUsers()">
+                    <div class="absolute left-3 top-2.5 text-gray-400">🔍</div>
+                    <button onclick="loadUsers()"
+                        class="absolute right-2 top-1.5 px-3 py-1 bg-amber-600 text-white rounded text-sm hover:bg-amber-700">搜尋</button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-amber-200">
+                            <th class="p-3 text-left text-amber-800" width="80">頭像</th>
+                            <th class="p-3 text-left text-amber-800">用戶資料</th>
+                            <th class="p-3 text-left text-amber-800">角色權限</th>
+                            <th class="p-3 text-left text-amber-800">狀態</th>
+                            <th class="p-3 text-left text-amber-800">最後登入</th>
+                            <th class="p-3 text-right text-amber-800">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-list">
+                        <!-- 用戶列表將由 JS 載入 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 商品管理區 -->
+        <div id="products-section" class="glass-card p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-amber-800">商品列表</h2>
+            </div>
+
+            <!-- 商品表格 -->
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-amber-200">
+                            <th class="p-3 text-center"><input type="checkbox" id="select-all"
+                                    onchange="toggleSelectAll(this)" class="w-4 h-4 accent-amber-600"></th>
+                            <th class="text-left p-3 text-amber-800">分類</th>
+                            <th class="text-left p-3 text-amber-800">品名</th>
+                            <th class="text-right p-3 text-amber-800">價格</th>
+                            <th class="text-left p-3 text-amber-800">備註</th>
+                            <th class="text-center p-3 text-amber-800">狀態</th>
+                            <th class="text-center p-3 text-amber-800">排序</th>
+                            <th class="text-center p-3 text-amber-800">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table">
+                        <tr>
+                            <td colspan="6" class="text-center py-8 text-gray-500">載入中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 訂單查看區 -->
+        <div id="orders-section" class="glass-card p-6 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-amber-800">訂單列表</h2>
+                <div class="flex gap-2">
+                    <button onclick="loadOrders()" class="text-amber-600 hover:text-amber-800">🔄 重新整理</button>
+                </div>
+            </div>
+
+            <!-- 批次操作列 -->
+            <div id="orders-batch-bar" class="hidden mb-4 p-3 bg-amber-50 rounded-lg flex items-center gap-3">
+                <span id="orders-batch-count" class="text-amber-800 font-medium"></span>
+                <button onclick="batchDeleteSelectedOrders()"
+                    class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">批次刪除</button>
+                <button onclick="clearOrderSelection()"
+                    class="px-3 py-1 text-gray-500 hover:text-gray-700 text-sm">取消選取</button>
+            </div>
+
+            <div id="orders-list">
+                <p class="text-center py-8 text-gray-500">載入中...</p>
+            </div>
+        </div>
+
+        <!-- 店家設定區 -->
+        <div id="settings-section" class="glass-card p-6 hidden">
+            <h2 class="text-xl font-bold text-amber-800 mb-6">店家設定</h2>
+
+            <!-- 營業狀態 -->
+            <div class="mb-8 p-4 bg-white rounded-lg border border-gray-200">
+                <h3 class="text-lg font-semibold text-amber-700 mb-4">📍 營業狀態</h3>
+                <div class="flex gap-4 mb-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="is_open" value="auto" class="w-4 h-4 accent-amber-600">
+                        <span>依營業時間自動</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="is_open" value="open" class="w-4 h-4 accent-green-600">
+                        <span class="text-green-600 font-medium">強制營業中</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="is_open" value="closed" class="w-4 h-4 accent-red-600">
+                        <span class="text-red-600 font-medium">強制休息中</span>
+                    </label>
+                </div>
+                <p id="current-status" class="text-sm text-gray-500"></p>
+            </div>
+
+            <!-- 營業時間 (日期區間) -->
+            <div class="mb-8 p-4 bg-white rounded-lg border border-gray-200">
+                <h3 class="text-lg font-semibold text-amber-700 mb-4">📅 開放訂購期間</h3>
+                <div class="flex flex-col gap-4 mb-4">
+                    <label class="flex flex-col gap-1">
+                        <span class="text-gray-600">開始時間</span>
+                        <input type="datetime-local" id="business_period_start"
+                            class="px-3 py-2 border rounded-lg w-full">
+                    </label>
+                    <label class="flex flex-col gap-1">
+                        <span class="text-gray-600">結束時間</span>
+                        <input type="datetime-local" id="business_period_end"
+                            class="px-3 py-2 border rounded-lg w-full">
+                    </label>
+                </div>
+                <p class="text-sm text-gray-500">設定開放訂購的完整日期與時間區間。</p>
+            </div>
+
+            <!-- 公告設定 -->
+            <div class="mb-8 p-4 bg-white rounded-lg border border-gray-200">
+                <h3 class="text-lg font-semibold text-amber-700 mb-4">📢 公告設定</h3>
+                <div class="flex items-center gap-4 mb-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="announcement_enabled" class="w-4 h-4 accent-amber-600">
+                        <span>啟用公告</span>
+                    </label>
+                </div>
+                <textarea id="announcement" class="w-full p-3 border rounded-lg resize-none" rows="3"
+                    placeholder="輸入要顯示在點餐頁面頂部的公告內容..."></textarea>
+                <p class="text-sm text-gray-500 mt-2">公告會顯示在點餐頁面的最上方，可用於公布寄送日期、活動通知等。</p>
+            </div>
+
+            <!-- 送單間隔設定 -->
+            <div class="mb-8 p-4 bg-white rounded-lg border border-gray-200">
+                <h3 class="text-lg font-semibold text-amber-700 mb-4">⏱️ 送單間隔限制</h3>
+                <div class="flex items-center gap-4 mb-4">
+                    <label class="flex items-center gap-2">
+                        <span class="text-gray-600">同一帳號送單間隔</span>
+                        <input type="number" id="order_interval_minutes"
+                            class="w-20 px-3 py-2 border rounded-lg text-center" min="0" max="60" value="5">
+                        <span class="text-gray-600">分鐘</span>
+                    </label>
+                </div>
+                <p class="text-sm text-gray-500">設為 0 表示不限制。建議設定 3-5 分鐘以防止惡意重複送單。</p>
+            </div>
+
+            <div class="text-center">
+                <button onclick="saveSettings()" class="btn-primary">儲存設定</button>
+            </div>
+        </div>
+
+        <div class="content-spacer"></div>
+    </div>
+
+    <!-- 底部固定欄 -->
+    <div class="bottom-bar hidden">
+        <div class="w-full max-w-6xl mx-auto flex justify-between items-center gap-4">
+            <!-- 批次操作區 -->
+            <div id="batch-bar" class="hidden flex items-center gap-3">
+                <span id="batch-count" class="text-amber-800 font-medium"></span>
+                <button onclick="batchEnable()"
+                    class="px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-sm">批次啟用</button>
+                <button onclick="batchDisable()"
+                    class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">批次停用</button>
+                <button onclick="batchAdjustPrice()"
+                    class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm">批次調價</button>
+                <button onclick="clearSelection()"
+                    class="px-3 py-2 text-gray-500 hover:text-gray-700 text-sm">取消選取</button>
+            </div>
+            <div class="flex-grow"></div>
+            <button id="btn-add-product" onclick="showAddProductModal()" class="btn-primary">
+                + 新增商品
+            </button>
+        </div>
+    </div>
+
+    <!-- ============ 新增/編輯商品 Modal ============ -->
+    <div id="product-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modal-title" class="text-xl font-bold text-amber-800 mb-6">新增商品</h3>
+            <form id="product-form" onsubmit="saveProduct(event)">
+                <input type="hidden" id="product-id">
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">分類 *</label>
+                    <select id="product-category" class="w-full border rounded-lg p-3" required>
+                        <option value="">載入中...</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">品名 *</label>
+                    <input type="text" id="product-name" class="w-full border rounded-lg p-3" required
+                        placeholder="請輸入品名">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">價格 *</label>
+                    <input type="number" id="product-price" class="w-full border rounded-lg p-3" required
+                        placeholder="請輸入價格" min="0">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">備註</label>
+                    <input type="text" id="product-note" class="w-full border rounded-lg p-3" placeholder="例：需冷藏、六日限定">
+                </div>
+
+                <div class="mb-6">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="product-enabled" checked class="w-5 h-5">
+                        <span class="text-gray-700">啟用販售</span>
+                    </label>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" class="btn-primary flex-1">儲存</button>
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 px-6 py-3 bg-gray-200 rounded-lg">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============ 編輯訂單 Modal ============ -->
+    <div id="order-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold text-amber-800 mb-6">修改訂單</h3>
+            <form id="order-form" onsubmit="saveOrder(event)">
+                <input type="hidden" id="order-id">
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">顧客姓名</label>
+                    <input type="text" id="order-name" class="w-full border rounded-lg p-3" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">聯絡電話</label>
+                    <input type="tel" id="order-phone" class="w-full border rounded-lg p-3" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">訂單內容</label>
+                    <textarea id="order-items" class="w-full border rounded-lg p-3" rows="6" required></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">總金額</label>
+                    <input type="number" id="order-total" class="w-full border rounded-lg p-3" required min="0">
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" class="btn-primary flex-1">儲存</button>
+                    <button type="button" onclick="closeOrderModal()"
+                        class="flex-1 px-6 py-3 bg-gray-200 rounded-lg">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============ 分類管理 Modal ============ -->
+    <div id="category-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-lg">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-amber-800">分類管理</h3>
+                <button onclick="closeCategoryManager()" class="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+
+            <div class="mb-4 flex gap-2">
+                <input type="text" id="new-category-name" class="flex-grow border rounded-lg p-2"
+                    placeholder="輸入新分類名稱...">
+                <button onclick="addNewCategory()"
+                    class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700">新增</button>
+            </div>
+
+            <div id="category-list" class="max-h-60 overflow-y-auto mb-4">
+                <!-- 分類列表 -->
+            </div>
+
+            <div class="text-right">
+                <button onclick="closeCategoryManager()" class="px-6 py-2 bg-gray-200 rounded-lg">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ LINE Bot 管理 Modal ============ -->
+    <div id="linebot-modal" class="modal-overlay hidden">
+        <div class="modal-content max-w-lg">
+            <h3 class="text-xl font-bold text-amber-800 mb-6" id="linebot-modal-title">新增 LINE 帳號</h3>
+            <form id="linebot-form" onsubmit="saveLineBot(event)">
+                <input type="hidden" id="bot-id">
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">帳號名稱</label>
+                    <input type="text" id="bot-name" class="w-full border rounded-lg p-3" required
+                        placeholder="例如：主要帳號">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Channel Access Token</label>
+                    <input type="text" id="bot-token" class="w-full border rounded-lg p-3" required
+                        placeholder="長效 Token">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">管理員 User ID</label>
+                    <input type="text" id="bot-admin-id" class="w-full border rounded-lg p-3" required
+                        placeholder="接收通知的 User ID">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">當前用量（本月）</label>
+                    <input type="number" id="bot-usage" class="w-full border rounded-lg p-3" required min="0" value="0">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">每月上限</label>
+                    <input type="number" id="bot-limit" class="w-full border rounded-lg p-3" required min="1"
+                        value="200">
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" class="btn-primary flex-1">儲存</button>
+                    <button type="button" onclick="closeLineBotModal()"
+                        class="flex-1 px-6 py-3 bg-gray-200 rounded-lg">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        //              系統設定區 (請修改此處)
+        // ==========================================
+
+        // 1. Supabase API 網址 (必填)
+        // 1️⃣ 修改為你的 Supabase 專案 URL
+        const API_URL = 'https://vwkemmyigpykuxyunbec.supabase.co/functions/v1/api';
+
+        // 2. LINE Login 設定 (必填)
+        const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/admin.html';
+
+        // ==========================================
+        //              以下程式碼請勿修改
+        // ==========================================
+
+        // 狀態
+        let currentUser = null;
+        let categories = [];
+        let products = [];
+        let orders = [];
+        let lineBots = [];
+
+        /**
+         * 安全性輔助函數：取得已登入使用者 ID
+         * 若未登入則拋出錯誤
+         */
+        function getAuthUserId() {
+            if (!currentUser || !currentUser.userId) {
+                throw new Error('請先登入');
+            }
+            return currentUser.userId;
+        }
+
+        // ============ 初始化 ============
+        document.addEventListener('DOMContentLoaded', () => {
+            // 檢查 URL 是否有 LINE Login 回傳的 code
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+
+            if (code) {
+                // 從 LINE Login 返回
+                handleLineCallback(code, state);
+            } else {
+                // 檢查是否已登入
+                checkLoginStatus();
+            }
+        });
+
+        // ============ LINE Login ============
+        async function loginWithLine() {
+            try {
+                // 從後端取得授權 URL（安全性：避免前端暴露 Channel ID）
+                const response = await fetch(`${API_URL}?action=getLineLoginUrl&redirectUri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.setItem('line_login_state', result.state);
+                    window.location.href = result.authUrl;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '無法啟動登入流程：' + error.message, 'error');
+            }
+        }
+
+        async function handleLineCallback(code, state) {
+            // 驗證 state (改用 localStorage 以避免 iOS 跨瀏覽器問題)
+            const savedState = localStorage.getItem('line_login_state');
+
+            // 清除用過的 state
+            localStorage.removeItem('line_login_state');
+
+            if (!savedState || state !== savedState) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '驗證失敗',
+                    text: `State 不符合 (Saved: ${savedState}, Returned: ${state})。請嘗試重新登入。`,
+                    confirmButtonText: '確定'
+                }).then(() => {
+                    window.location.href = 'admin.html';
+                });
+                return;
+            }
+
+            // 顯示載入中
+            Swal.fire({
+                title: '登入驗證中...',
+                text: '正在與伺服器交換金鑰',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                // 透過 Supabase 後端處理 Token 交換
+                const response = await fetch(`${API_URL}?action=lineLogin&code=${encodeURIComponent(code)}`);
+                const result = await response.json();
+
+                // 清除 URL 參數
+                window.history.replaceState({}, document.title, 'admin.html');
+
+                if (result.success && result.isAdmin) {
+                    // 登入成功
+                    currentUser = result.user;
+                    localStorage.setItem('admin_user', JSON.stringify(currentUser));
+                    Swal.close();
+                    showAdminPage();
+                } else {
+                    // 登入失敗
+                    Swal.fire({
+                        icon: 'error',
+                        title: '登入失敗',
+                        text: result.error || '您沒有管理員權限',
+                        confirmButtonText: '確定'
+                    });
+                }
+            } catch (error) {
+                // 清除 URL 參數
+                window.history.replaceState({}, document.title, 'admin.html');
+                Swal.fire('錯誤', '登入失敗：' + error.message, 'error');
+            }
+        }
+
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('admin_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showAdminPage();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_user');
+            currentUser = null;
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('admin-page').classList.add('hidden');
+            // 隱藏底部欄
+            const bottomBar = document.querySelector('.bottom-bar');
+            if (bottomBar) bottomBar.classList.add('hidden');
+        }
+
+        // ============ 頁面顯示 ============
+        async function showAdminPage() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('admin-page').classList.remove('hidden');
+            document.getElementById('admin-name').textContent = currentUser.displayName || '管理員';
+
+            // 並行載入分類和商品（效能優化）
+            await Promise.all([loadCategories(), loadProducts()]);
+
+            showTab('products'); // 確保切換到商品頁籤並顯示底部欄
+        }
+
+        function showTab(tab) {
+            const tabs = ['products', 'orders', 'settings', 'blacklist', 'linebots', 'users'];
+            tabs.forEach(t => {
+                const tabBtn = document.getElementById(`tab-${t}`);
+                const section = document.getElementById(`${t}-section`);
+                if (tabBtn) {
+                    tabBtn.classList.remove('tab-active');
+                    tabBtn.classList.add('bg-white', 'text-gray-600');
+                }
+                if (section) section.classList.add('hidden');
+            });
+
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            document.getElementById(`tab-${tab}`).classList.remove('bg-white', 'text-gray-600');
+            document.getElementById(`${tab}-section`).classList.remove('hidden');
+
+            // Toggle bottom bar visibility
+            const bottomBar = document.querySelector('.bottom-bar');
+            if (bottomBar) {
+                if (tab === 'products') {
+                    bottomBar.classList.remove('hidden');
+                } else {
+                    bottomBar.classList.add('hidden');
+                }
+            }
+
+            if (tab === 'orders') {
+                loadOrders();
+            } else if (tab === 'settings') {
+                loadSettings();
+            } else if (tab === 'blacklist') {
+                loadBlacklist();
+            } else if (tab === 'linebots') {
+                loadLineBots();
+            } else if (tab === 'users') {
+                loadUsers();
+            }
+        }
+
+        // ============ 分類管理 ============
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_URL}?action=getCategories&_=${new Date().getTime()}`);
+                const result = await response.json();
+                if (result.success) {
+                    categories = result.categories;
+                    renderCategoryOptions();
+                } else {
+                    console.error('分類載入失敗', result.error);
+                }
+            } catch (error) {
+                console.error('分類載入錯誤', error);
+            }
+        }
+
+        function renderCategoryOptions() {
+            const select = document.getElementById('product-category');
+            select.innerHTML = '<option value="">請選擇分類</option>';
+            categories.forEach(cat => {
+                select.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
+            });
+        }
+
+        function openCategoryManager() {
+            renderCategoryManager();
+            document.getElementById('category-modal').classList.remove('hidden');
+        }
+
+        function closeCategoryManager() {
+            document.getElementById('category-modal').classList.add('hidden');
+        }
+
+        function renderCategoryManager() {
+            const list = document.getElementById('category-list');
+            if (categories.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-center py-4">尚無分類</p>';
+                return;
+            }
+
+            let html = '<div class="flex flex-col gap-2">';
+            categories.forEach((cat, index) => {
+                const isFirst = index === 0;
+                const isLast = index === categories.length - 1;
+                html += `
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <div class="flex gap-1">
+                                <button onclick="moveCategory(${cat.id}, 'top')" 
+                                    class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-amber-600 text-xs ${isFirst ? 'opacity-30 cursor-not-allowed' : ''}"
+                                    ${isFirst ? 'disabled' : ''} title="置頂">⇈</button>
+                                <button onclick="moveCategory(${cat.id}, 'up')" 
+                                    class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-amber-600 ${isFirst ? 'opacity-30 cursor-not-allowed' : ''}"
+                                    ${isFirst ? 'disabled' : ''} title="上移">▲</button>
+                                <button onclick="moveCategory(${cat.id}, 'down')" 
+                                    class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-amber-600 ${isLast ? 'opacity-30 cursor-not-allowed' : ''}"
+                                    ${isLast ? 'disabled' : ''} title="下移">▼</button>
+                                <button onclick="moveCategory(${cat.id}, 'bottom')" 
+                                    class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-amber-600 text-xs ${isLast ? 'opacity-30 cursor-not-allowed' : ''}"
+                                    ${isLast ? 'disabled' : ''} title="置底">⇊</button>
+                            </div>
+                            <span class="font-medium text-gray-700">${cat.name}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editCategoryName(${cat.id}, '${cat.name.replace(/'/g, "\\'")}')" class="text-blue-500 hover:text-blue-700 text-sm">編輯</button>
+                            <button onclick="deleteCategory(${cat.id})" class="text-red-500 hover:text-red-700 text-sm">刪除</button>
+                        </div>
+                    </div>`;
+            });
+            html += '</div>';
+            list.innerHTML = html;
+        }
+
+        async function moveCategory(id, direction) {
+            try {
+                // Show loading indicator
+                Swal.fire({ title: '移動中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${API_URL}?action=reorderCategory`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        id: id,
+                        direction: direction
+                    })
+                });
+                const result = await response.json();
+                Swal.close();
+
+                if (result.success) {
+                    await loadCategories();
+                    renderCategoryManager();
+                    renderProducts(); // 即時更新商品列表
+                } else {
+                    Swal.fire('移動失敗', result.error || '未知錯誤', 'error');
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        async function addNewCategory() {
+            const input = document.getElementById('new-category-name');
+            const name = input.value.trim();
+            if (!name) return;
+
+            try {
+                const response = await fetch(`${API_URL}?action=addCategory`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        name: name
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    Toast.fire({ icon: 'success', title: '新增成功' });
+                    input.value = '';
+                    loadCategories().then(() => renderCategoryManager());
+                } else {
+                    Swal.fire('錯誤', result.error, 'error');
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        async function editCategoryName(id, oldName) {
+            const { value: newName } = await Swal.fire({
+                title: '修改分類名稱',
+                input: 'text',
+                inputValue: oldName,
+                showCancelButton: true,
+                confirmButtonText: '更新',
+                cancelButtonText: '取消',
+                inputValidator: (value) => {
+                    if (!value) return '請輸入分類名稱！';
+                }
+            });
+
+            if (newName && newName !== oldName) {
+                try {
+                    Swal.showLoading();
+                    const response = await fetch(`${API_URL}?action=updateCategory`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            userId: getAuthUserId(),
+                            id: id,
+                            name: newName
+                        })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        Swal.fire('成功', '分類已更新', 'success');
+                        loadCategories().then(() => {
+                            renderCategoryManager();
+                            loadProducts(); // 重新載入商品以更新顯示
+                        });
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    Swal.fire('錯誤', error.message, 'error');
+                }
+            }
+        }
+
+        async function deleteCategory(id) {
+            const result = await Swal.fire({
+                title: '刪除此分類？',
+                text: '注意：刪除後，屬於此分類的商品將需要重新分類',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: '刪除',
+                cancelButtonText: '取消'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${API_URL}?action=deleteCategory`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        id: id
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('成功', '分類已刪除', 'success');
+                    loadCategories().then(() => renderCategoryManager());
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        // ============ 商品管理 ============
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_URL}?action=getProducts&_=${new Date().getTime()}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    products = result.products;
+                    renderProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                const errorMsg = error.message === 'Failed to fetch'
+                    ? '網路連線失敗，請檢查您的網路狀態'
+                    : error.message;
+                document.getElementById('products-table').innerHTML = `
+                    <tr><td colspan="6" class="text-center py-8 text-red-500">
+                        載入失敗：${errorMsg}<br>
+                        <button onclick="loadProducts()" class="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition">重試</button>
+                    </td></tr>`;
+            }
+        }
+
+        function renderProducts() {
+            const tbody = document.getElementById('products-table');
+
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">尚無商品</td></tr>';
+                updateBatchBar();
+                return;
+            }
+
+            // 依分類分組
+            const grouped = {};
+            products.forEach(p => {
+                if (!grouped[p.category]) grouped[p.category] = [];
+                grouped[p.category].push(p);
+            });
+
+            // 按照 categories 的順序排列分類
+            const categoryOrder = categories.map(c => c.name);
+            const sortedCategories = Object.keys(grouped).sort((a, b) => {
+                const indexA = categoryOrder.indexOf(a);
+                const indexB = categoryOrder.indexOf(b);
+                if (indexA === -1) return 1;
+                if (indexB === -1) return -1;
+                return indexA - indexB;
+            });
+
+            let html = '';
+            sortedCategories.forEach(category => {
+                const items = grouped[category];
+                // 依 sortOrder 排序
+                items.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+                items.forEach((p, index) => {
+                    const statusClass = p.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
+                    const statusText = p.enabled ? '啟用' : '停用';
+                    const isFirst = index === 0;
+                    const isLast = index === items.length - 1;
+
+                    html += `
+                        <tr class="product-row border-b border-gray-100" data-id="${p.id}">
+                            <td class="p-3 text-center">
+                                <input type="checkbox" class="product-checkbox w-4 h-4 accent-amber-600" value="${p.id}" onchange="updateBatchBar()">
+                            </td>
+                            <td class="p-3 text-gray-600 cursor-pointer hover:bg-amber-50 rounded" 
+                                onclick="editCategory(this, ${p.id}, '${p.category.replace(/'/g, "\\'")}')" 
+                                title="點擊修改分類">
+                                ${p.category}
+                            </td>
+                            <td class="p-3 font-medium cursor-pointer hover:bg-amber-50 rounded" 
+                                onclick="editName(this, ${p.id}, '${p.name.replace(/'/g, "\\'")}')" 
+                                title="點擊修改品名">
+                                ${p.name}
+                            </td>
+                            <td class="p-3 text-right cursor-pointer hover:bg-amber-50 rounded" 
+                                onclick="editPrice(this, ${p.id}, ${p.price})" 
+                                title="點擊修改價格">
+                                $${p.price}
+                            </td>
+                            <td class="p-3 text-gray-500 text-sm cursor-pointer hover:bg-amber-50 rounded" 
+                                onclick="editNote(this, ${p.id}, '${(p.note || '').replace(/'/g, "\\'")}')" 
+                                title="點擊修改備註">
+                                ${p.note || '-'}
+                            </td>
+                            <td class="p-3 text-center">
+                                <span onclick="toggleProductStatus(${p.id})" 
+                                      class="px-2 py-1 rounded text-xs ${statusClass} cursor-pointer hover:opacity-80 transition select-none"
+                                      title="點擊切換狀態">
+                                    ${statusText}
+                                </span>
+                            </td>
+                            <td class="p-3 text-center whitespace-nowrap">
+                                <button onclick="moveProduct(${p.id}, 'up')" 
+                                    class="w-6 h-6 text-gray-400 hover:text-amber-600 ${isFirst ? 'opacity-30 cursor-not-allowed' : ''}" 
+                                    ${isFirst ? 'disabled' : ''} title="上移">▲</button>
+                                <button onclick="moveProduct(${p.id}, 'down')" 
+                                    class="w-6 h-6 text-gray-400 hover:text-amber-600 ${isLast ? 'opacity-30 cursor-not-allowed' : ''}" 
+                                    ${isLast ? 'disabled' : ''} title="下移">▼</button>
+                            </td>
+                            <td class="p-3 text-center">
+                                <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 mr-2">編輯</button>
+                                <button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700">刪除</button>
+                            </td>
+                        </tr>`;
+                });
+            });
+
+            tbody.innerHTML = html;
+            updateBatchBar();
+        }
+
+        // ---- 直覺編輯功能 ----
+
+        function editPrice(cell, id, currentPrice) {
+            // 避免重複點擊產生多個 input
+            if (cell.querySelector('input')) return;
+
+            const originalContent = cell.innerHTML;
+
+            cell.innerHTML = `
+                <input type="number" 
+                       value="${currentPrice}" 
+                       class="w-20 p-1 border rounded text-right focus:ring-2 focus:ring-amber-500 outline-none"
+                       onblur="savePrice(this, ${id}, ${currentPrice})"
+                       onkeydown="if(event.key==='Enter') this.blur()"
+                       autoFocus
+                >
+            `;
+
+            // 自動聚焦
+            const input = cell.querySelector('input');
+            input.focus();
+
+            // 注意：如果 input 失去焦點時沒有改變，還原
+            input.dataset.original = originalContent;
+        }
+
+        function editCategory(cell, id, currentCategory) {
+            if (cell.querySelector('select')) return;
+            const originalContent = cell.innerHTML;
+
+            let optionsHtml = '<option value="">請選擇</option>';
+            categories.forEach(cat => {
+                const selected = cat.name === currentCategory ? 'selected' : '';
+                optionsHtml += `<option value="${cat.name}" ${selected}>${cat.name}</option>`;
+            });
+
+            cell.innerHTML = `
+                <select class="w-full p-1 border rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+                        onchange="saveCategory(this, ${id}, '${currentCategory}')"
+                        onblur="this.onchange()">
+                    ${optionsHtml}
+                </select>
+            `;
+            cell.querySelector('select').focus();
+            cell.querySelector('select').dataset.original = originalContent;
+        }
+
+        async function saveCategory(select, id, oldCategory) {
+            const newCategory = select.value;
+            const cell = select.parentElement;
+
+            if (!newCategory || newCategory === oldCategory) {
+                cell.innerHTML = select.dataset.original;
+                return;
+            }
+
+            await updateProductField(id, 'category', newCategory, cell, oldCategory);
+        }
+
+        function editName(cell, id, currentName) {
+            if (cell.querySelector('input')) return;
+            const originalContent = cell.innerHTML;
+
+            cell.innerHTML = `
+                <input type="text" 
+                       value="${currentName}" 
+                       class="w-full p-1 border rounded focus:ring-2 focus:ring-amber-500 outline-none"
+                       onblur="saveName(this, ${id}, '${currentName.replace(/'/g, "\\'")}')"
+                       onkeydown="if(event.key==='Enter') this.blur()"
+                >
+            `;
+            const input = cell.querySelector('input');
+            input.focus();
+            input.select();
+            input.dataset.original = originalContent;
+        }
+
+        async function saveName(input, id, oldName) {
+            const newName = input.value.trim();
+            const cell = input.parentElement;
+
+            if (!newName || newName === oldName) {
+                cell.innerHTML = input.dataset.original;
+                return;
+            }
+
+            await updateProductField(id, 'name', newName, cell, oldName);
+        }
+
+        function editNote(cell, id, currentNote) {
+            if (cell.querySelector('input')) return;
+            const originalContent = cell.innerHTML;
+
+            cell.innerHTML = `
+                <input type="text" 
+                       value="${currentNote}" 
+                       class="w-full p-1 border rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm"
+                       onblur="saveNote(this, ${id}, '${currentNote.replace(/'/g, "\\'")}')"
+                       onkeydown="if(event.key==='Enter') this.blur()"
+                       placeholder="無備註"
+                >
+            `;
+            const input = cell.querySelector('input');
+            input.focus();
+            input.select();
+            input.dataset.original = originalContent;
+        }
+
+        async function saveNote(input, id, oldNote) {
+            const newNote = input.value.trim();
+            const cell = input.parentElement;
+
+            if (newNote === oldNote) {
+                cell.innerHTML = input.dataset.original;
+                return;
+            }
+
+            await updateProductField(id, 'note', newNote, cell, oldNote || '');
+        }
+
+        async function updateProductField(id, field, newValue, cell, oldValue) {
+            const product = products.find(p => p.id == id);
+            if (!product) return;
+
+            // 準備更新資料
+            const updateData = {
+                userId: getAuthUserId(),
+                id: id,
+                category: product.category,
+                name: product.name,
+                price: product.price,
+                note: product.note || '',
+                enabled: product.enabled
+            };
+            updateData[field] = newValue;
+
+            try {
+                const response = await fetch(`${API_URL}?action=updateProduct`, {
+                    method: 'POST',
+                    body: JSON.stringify(updateData)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    product[field] = newValue;
+                    // 更新顯示
+                    if (field === 'price') {
+                        cell.innerHTML = `$${newValue}`;
+                    } else if (field === 'note') {
+                        cell.innerHTML = newValue || '-';
+                    } else {
+                        cell.innerHTML = newValue;
+                    }
+                    Toast.fire({ icon: 'success', title: '已更新' });
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('更新失敗', error.message, 'error');
+                loadProducts();
+            }
+        }
+
+        async function savePrice(input, id, oldPrice) {
+            const newPrice = parseInt(input.value);
+            const cell = input.parentElement;
+
+            if (isNaN(newPrice) || newPrice < 0) {
+                Swal.fire('錯誤', '請輸入有效的價格', 'error');
+                cell.innerHTML = input.dataset.original; // 還原
+                return;
+            }
+
+            if (newPrice === oldPrice) {
+                cell.innerHTML = `$${oldPrice}`; // 沒變，還原顯示
+                return;
+            }
+
+            // 顯示載入狀態
+            cell.innerHTML = `<span class="text-gray-400">更新中...</span>`;
+
+            const product = products.find(p => p.id == id);
+            if (!product) return;
+
+            const updatedProduct = { ...product, price: newPrice };
+
+            const success = await callUpdateAPI(updatedProduct);
+
+            if (success) {
+                product.price = newPrice; // 更新本地資料
+                renderProducts();
+                Toast.fire({ icon: 'success', title: '價格已更新' });
+            } else {
+                cell.innerHTML = `$${oldPrice}`; // 失敗還原
+            }
+        }
+
+        async function toggleProductStatus(id) {
+            const product = products.find(p => p.id == id);
+            if (!product) return;
+
+            // 立即顯示切換狀態（提升 UX），失敗再切回來
+            const oldStatus = product.enabled;
+            product.enabled = !product.enabled; // Optimistic update
+            renderProducts();
+
+            const success = await callUpdateAPI(product);
+
+            if (success) {
+                Toast.fire({ icon: 'success', title: product.enabled ? '商品已啟用' : '商品已停用' });
+            } else {
+                product.enabled = oldStatus; // 失敗還原
+                renderProducts();
+            }
+        }
+
+        // 通用 API 呼叫函數
+        async function callUpdateAPI(productData) {
+            const data = {
+                userId: getAuthUserId(),
+                id: productData.id,
+                category: productData.category,
+                name: productData.name,
+                price: productData.price,
+                note: productData.note,
+                enabled: productData.enabled
+            };
+
+            try {
+                const response = await fetch(`${API_URL}?action=updateProduct`, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    return true;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '更新失敗：' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // SweetAlert Toast 設定
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        // --------------------
+
+        function showAddProductModal() {
+            document.getElementById('modal-title').textContent = '新增商品';
+            document.getElementById('product-id').value = '';
+            document.getElementById('product-form').reset();
+            document.getElementById('product-enabled').checked = true;
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id == id);
+            if (!product) return;
+
+            document.getElementById('modal-title').textContent = '編輯商品';
+            document.getElementById('product-id').value = product.id;
+            document.getElementById('product-category').value = product.category;
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-price').value = product.price;
+            document.getElementById('product-note').value = product.note || '';
+            document.getElementById('product-enabled').checked = product.enabled;
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        async function saveProduct(event, force = false) {
+            if (event) event.preventDefault();
+
+            const id = document.getElementById('product-id').value;
+            const data = {
+                userId: getAuthUserId(),
+                id: id,
+                category: document.getElementById('product-category').value,
+                name: document.getElementById('product-name').value,
+                price: document.getElementById('product-price').value,
+                note: document.getElementById('product-note').value,
+                enabled: document.getElementById('product-enabled').checked,
+                force: force // 新增強制參數
+            };
+
+            const action = id ? 'updateProduct' : 'addProduct';
+
+            try {
+                if (!force) {
+                    Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                }
+
+                const response = await fetch(`${API_URL}?action=${action}`, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire('成功', result.message, 'success');
+                    closeModal();
+                    loadProducts();
+                } else if (result.isDuplicate) {
+                    // 處理重複商品確認
+                    const confirmResult = await Swal.fire({
+                        title: '商品名稱重複',
+                        text: '已經有相同名稱的商品了，確定要繼續新增嗎？',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: '確定新增',
+                        cancelButtonText: '取消'
+                    });
+
+                    if (confirmResult.isConfirmed) {
+                        saveProduct(null, true); // 強制新增
+                    }
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        async function deleteProduct(id) {
+            const result = await Swal.fire({
+                title: '確認刪除？',
+                text: '此操作無法復原',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: '刪除',
+                cancelButtonText: '取消'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${API_URL}?action=deleteProduct`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        id: id
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('成功', '商品已刪除', 'success');
+                    loadProducts();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        // ============ 訂單管理 ============
+        async function loadOrders() {
+            const ordersList = document.getElementById('orders-list');
+            ordersList.innerHTML = '<p class="text-center py-8 text-gray-500">載入中...</p>';
+
+            try {
+                const response = await fetch(`${API_URL}?action=getOrders&userId=${getAuthUserId()}&_=${new Date().getTime()}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    orders = result.orders;
+                    // 先載入黑名單資料，再渲染訂單（確保封鎖狀態顯示正確）
+                    await loadBlacklistDataOnly();
+                    renderOrders();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                ordersList.innerHTML = `<p class="text-center py-8 text-red-500">載入失敗：${error.message}</p>`;
+            }
+        }
+
+        function renderOrders() {
+            const ordersList = document.getElementById('orders-list');
+
+            if (!orders || orders.length === 0) {
+                ordersList.innerHTML = '<p class="text-center py-8 text-gray-500">尚無訂單</p>';
+                return;
+            }
+
+            let html = '';
+            orders.forEach(order => {
+                const date = new Date(order.timestamp);
+                const dateStr = date.toLocaleString('zh-TW');
+
+                // 檢查是否在黑名單中
+                const isBlocked = blacklistData.some(b => b.lineUserId === order.lineUserId);
+
+                html += `
+                    <div class="border-b border-gray-100 py-4 ${isBlocked ? 'bg-red-50 -mx-4 px-4' : ''}">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" class="order-checkbox w-4 h-4 accent-amber-600" 
+                                    data-order-id="${order.orderId}"
+                                    onchange="updateOrderBatchBar()">
+                                <div>
+                                    <span class="font-bold text-amber-800">#${order.orderId}</span>
+                                    <span class="text-gray-500 text-sm ml-2">${dateStr}</span>
+                                    ${isBlocked ? '<span class="ml-2 px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded">已封鎖</span>' : ''}
+                                </div>
+                            </div>
+                            <span class="font-bold text-lg">$${order.total}</span>
+                        </div>
+                        <div class="text-gray-600 ml-7">
+                            <p><span class="font-medium">顧客：</span>${order.lineName}</p>
+                            <p><span class="font-medium">電話：</span>${order.phone}</p>
+                            ${order.lineUserId ? `<p class="text-xs text-gray-400">User ID: ${order.lineUserId.substring(0, 10)}...</p>` : ''}
+                            <p class="mt-2 text-sm whitespace-pre-line bg-gray-50 p-3 rounded">${order.items}</p>
+                        </div>
+                        <div class="mt-3 flex justify-end gap-3">
+                            ${order.lineUserId ?
+                        (isBlocked ?
+                            `<button onclick="unblockUser('${order.lineUserId}', '${order.lineName}')" class="text-green-500 hover:text-green-700 font-medium">解除封鎖</button>` :
+                            `<button onclick="blockUser('${order.lineUserId}', '${order.lineName}')" class="text-orange-500 hover:text-orange-700 font-medium">封鎖</button>`
+                        ) : ''
+                    }
+                            <button onclick="editOrder('${order.orderId}')" class="text-blue-500 hover:text-blue-700 font-medium">編輯</button>
+                            <button onclick="deleteOrder('${order.orderId}')" class="text-red-500 hover:text-red-700 font-medium">刪除</button>
+                        </div>
+                    </div>`;
+            });
+
+            ordersList.innerHTML = html;
+        }
+
+        // ============ 訂單批次管理 ============
+
+        function updateOrderBatchBar() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const batchBar = document.getElementById('orders-batch-bar');
+            const countSpan = document.getElementById('orders-batch-count');
+
+            if (checkboxes.length > 0) {
+                batchBar.classList.remove('hidden');
+                countSpan.textContent = `已選取 ${checkboxes.length} 筆訂單`;
+            } else {
+                batchBar.classList.add('hidden');
+            }
+        }
+
+        function clearOrderSelection() {
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+            updateOrderBatchBar();
+        }
+
+        async function batchDeleteSelectedOrders() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            const orderIds = Array.from(checkboxes).map(cb => cb.dataset.orderId);
+
+            if (orderIds.length === 0) {
+                Swal.fire('提示', '請先選取要刪除的訂單', 'info');
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: '確認批次刪除',
+                text: `確定要刪除選取的 ${orderIds.length} 筆訂單嗎？此操作無法復原。`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: '確定刪除',
+                cancelButtonText: '取消'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${API_URL}?action=batchDeleteOrders`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        orderIds: orderIds
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Toast.fire({ icon: 'success', title: data.message });
+                    loadOrders();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('刪除失敗', error.message, 'error');
+            }
+        }
+
+        function editOrder(orderId) {
+            const order = orders.find(o => o.orderId == orderId); // 注意 ID 類型可能是字串
+            if (!order) return;
+
+            document.getElementById('order-id').value = order.orderId;
+            document.getElementById('order-name').value = order.lineName;
+            document.getElementById('order-phone').value = order.phone;
+            document.getElementById('order-items').value = order.items;
+            document.getElementById('order-total').value = order.total;
+
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('order-modal').classList.add('hidden');
+        }
+
+        async function saveOrder(event) {
+            event.preventDefault();
+
+            const orderId = document.getElementById('order-id').value;
+            const data = {
+                userId: getAuthUserId(),
+                orderId: orderId,
+                lineName: document.getElementById('order-name').value,
+                phone: document.getElementById('order-phone').value,
+                items: document.getElementById('order-items').value,
+                total: document.getElementById('order-total').value
+            };
+
+            try {
+                Swal.fire({ title: '更新中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${API_URL}?action=updateOrder`, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire('成功', '訂單已更新', 'success');
+                    closeOrderModal();
+                    loadOrders();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        async function deleteOrder(orderId) {
+            const result = await Swal.fire({
+                title: '確認刪除此訂單？',
+                text: `訂單編號: #${orderId}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: '刪除',
+                cancelButtonText: '取消'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${API_URL}?action=deleteOrder`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        orderId: orderId
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('成功', '訂單已刪除', 'success');
+                    loadOrders(); // 重新載入列表
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        // ============ 黑名單功能 ============
+        async function blockUser(lineUserId, displayName) {
+            const { value: reason } = await Swal.fire({
+                title: '封鎖用戶',
+                text: `確定要封鎖「${displayName}」嗎？`,
+                input: 'text',
+                inputLabel: '封鎖原因（選填）',
+                inputPlaceholder: '輸入封鎖原因...',
+                showCancelButton: true,
+                confirmButtonText: '確定封鎖',
+                confirmButtonColor: '#ef4444',
+                cancelButtonText: '取消'
+            });
+
+            if (reason === undefined) return; // 使用者取消
+
+            try {
+                const response = await fetch(`${API_URL}?action=addToBlacklist`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        lineUserId: lineUserId,
+                        displayName: displayName,
+                        reason: reason || ''
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('成功', `已將「${displayName}」加入黑名單`, 'success');
+                    // 如果在黑名單頁面，重新載入
+                    if (document.getElementById('tab-blacklist').classList.contains('tab-active')) {
+                        loadBlacklist();
+                    }
+                    // 如果在訂單頁面，重新載入訂單（以便更新封鎖狀態顯示）
+                    if (document.getElementById('tab-orders').classList.contains('tab-active')) {
+                        loadBlacklistDataOnly().then(() => renderOrders());
+                    }
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        async function unblockUser(lineUserId, displayName) {
+            const result = await Swal.fire({
+                title: '解除封鎖',
+                text: `確定要解除對「${displayName}」的封鎖嗎？`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '確定解除',
+                confirmButtonColor: '#10b981',
+                cancelButtonText: '取消'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`${API_URL}?action=removeFromBlacklist`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        lineUserId: lineUserId
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire('成功', `已解除「${displayName}」的封鎖`, 'success');
+                    // 重新載入黑名單
+                    loadBlacklist();
+                    // 如果在訂單頁面，也更新訂單顯示
+                    if (document.getElementById('tab-orders').classList.contains('tab-active')) {
+                        loadBlacklistDataOnly().then(() => renderOrders());
+                    }
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', error.message, 'error');
+            }
+        }
+
+        let blacklistData = [];
+
+        async function loadBlacklist() {
+            const tbody = document.getElementById('blacklist-list');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4">載入中...</td></tr>';
+
+            try {
+                const response = await fetch(`${API_URL}?action=getBlacklist&userId=${getAuthUserId()}&_=${new Date().getTime()}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    blacklistData = result.blacklist;
+                    renderBlacklist();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-red-500">載入失敗: ${error.message}</td></tr>`;
+            }
+        }
+
+        // 僅載入資料不渲染（供其他函數使用）
+        async function loadBlacklistDataOnly() {
+            try {
+                const response = await fetch(`${API_URL}?action=getBlacklist&userId=${getAuthUserId()}&_=${new Date().getTime()}`);
+                const result = await response.json();
+                if (result.success) {
+                    blacklistData = result.blacklist;
+                }
+            } catch (error) {
+                console.error('Failed to load blacklist data', error);
+            }
+        }
+
+        function renderBlacklist() {
+            const tbody = document.getElementById('blacklist-list');
+
+            if (!blacklistData || blacklistData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-500">目前沒有封鎖名單</td></tr>';
+                return;
+            }
+
+            let html = '';
+            blacklistData.forEach(user => {
+                const blockedDate = new Date(user.blockedAt).toLocaleDateString('zh-TW');
+                html += `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="p-3 text-gray-800">
+                            <div class="font-medium">${user.displayName}</div>
+                            <div class="text-xs text-gray-400">ID: ${user.lineUserId}</div>
+                        </td>
+                        <td class="p-3 text-gray-600">${blockedDate}</td>
+                        <td class="p-3 text-gray-600">${user.reason || '-'}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="unblockUser('${user.lineUserId}', '${user.displayName}')" 
+                                class="text-green-500 hover:text-green-700 font-medium bg-green-50 px-3 py-1 rounded">
+                                解除封鎖
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // ============ 店家設定功能 ============
+        let storeSettings = {};
+        let saveSettingsTimer = null;
+
+        async function loadSettings() {
+            try {
+                const response = await fetch(`${API_URL}?action=getSettings&_=${new Date().getTime()}`);
+                const result = await response.json();
+                if (result.success) {
+                    storeSettings = result.settings;
+                    populateSettingsForm();
+                }
+            } catch (error) {
+                console.error('載入設定失敗', error);
+            }
+        }
+
+        function populateSettingsForm() {
+            // 營業狀態
+            const isOpenRadios = document.querySelectorAll('input[name="is_open"]');
+            isOpenRadios.forEach(radio => {
+                radio.checked = radio.value === (storeSettings.is_open || 'auto');
+            });
+
+            // 更新當前狀態顯示
+            const statusText = storeSettings.currentlyOpen ? '🟢 目前營業中' : '🔴 目前休息中';
+            document.getElementById('current-status').textContent =
+                `${statusText}（現在時間：${storeSettings.currentTime}）`;
+
+            // 營業時間 (日期區間)
+            document.getElementById('business_period_start').value = storeSettings.business_period_start || '';
+            document.getElementById('business_period_end').value = storeSettings.business_period_end || '';
+
+            // 公告
+            document.getElementById('announcement_enabled').checked = String(storeSettings.announcement_enabled) === 'true';
+            document.getElementById('announcement').value = storeSettings.announcement || '';
+
+            // 送單間隔
+            document.getElementById('order_interval_minutes').value = storeSettings.order_interval_minutes || '5';
+        }
+
+        function saveSettingsDebounced() {
+            // 防抖：500ms 內只執行一次
+            clearTimeout(saveSettingsTimer);
+            saveSettingsTimer = setTimeout(() => saveSettings(true), 500);
+        }
+
+        async function saveSettings(silent = false) {
+            // 收集表單資料
+            const isOpen = document.querySelector('input[name="is_open"]:checked')?.value || 'auto';
+            const businessPeriodStart = document.getElementById('business_period_start').value;
+            const businessPeriodEnd = document.getElementById('business_period_end').value;
+
+            const announcementEnabled = document.getElementById('announcement_enabled').checked;
+            const announcement = document.getElementById('announcement').value;
+            const orderIntervalMinutes = document.getElementById('order_interval_minutes').value;
+
+            const settings = {
+                is_open: isOpen,
+                business_period_start: businessPeriodStart,
+                business_period_end: businessPeriodEnd,
+                announcement_enabled: String(announcementEnabled),
+                announcement: announcement,
+                order_interval_minutes: orderIntervalMinutes
+            };
+
+            try {
+                const response = await fetch(`${API_URL}?action=updateSettings`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        settings: settings
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    if (!silent) {
+                        Toast.fire({ icon: 'success', title: '設定已儲存' });
+                    }
+                    // 重新載入設定以更新狀態顯示
+                    loadSettings();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('儲存失敗', error.message, 'error');
+            }
+        }
+
+        // ============ 批次編輯功能 ============
+
+        function toggleSelectAll(checkbox) {
+            const allCheckboxes = document.querySelectorAll('.product-checkbox');
+            allCheckboxes.forEach(cb => cb.checked = checkbox.checked);
+            updateBatchBar();
+        }
+
+        function getSelectedProductIds() {
+            const selected = [];
+            document.querySelectorAll('.product-checkbox:checked').forEach(cb => {
+                selected.push(parseInt(cb.value));
+            });
+            return selected;
+        }
+
+        function updateBatchBar() {
+            const selected = getSelectedProductIds();
+            const batchBar = document.getElementById('batch-bar');
+            const batchCount = document.getElementById('batch-count');
+
+            if (selected.length > 0) {
+                batchBar.classList.remove('hidden');
+                batchBar.classList.add('flex');
+                batchCount.textContent = `已選取 ${selected.length} 項`;
+            } else {
+                batchBar.classList.add('hidden');
+                batchBar.classList.remove('flex');
+            }
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.product-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('select-all').checked = false;
+            updateBatchBar();
+        }
+
+        async function batchEnable() {
+            const ids = getSelectedProductIds();
+            if (ids.length === 0) return;
+            await batchUpdate('enable', ids);
+        }
+
+        async function batchDisable() {
+            const ids = getSelectedProductIds();
+            if (ids.length === 0) return;
+            await batchUpdate('disable', ids);
+        }
+
+        async function batchAdjustPrice() {
+            const ids = getSelectedProductIds();
+            if (ids.length === 0) return;
+
+            const { value: adjustment } = await Swal.fire({
+                title: '批次調價',
+                html: `
+                    <p class="text-sm text-gray-600 mb-4">正數為加價，負數為減價</p>
+                    <input type="number" id="price-adjustment" class="swal2-input" placeholder="例如: 10 或 -5">
+                `,
+                showCancelButton: true,
+                confirmButtonText: '確定調價',
+                cancelButtonText: '取消',
+                preConfirm: () => {
+                    const val = document.getElementById('price-adjustment').value;
+                    if (!val || isNaN(parseInt(val))) {
+                        Swal.showValidationMessage('請輸入有效的數字');
+                        return false;
+                    }
+                    return parseInt(val);
+                }
+            });
+
+            if (adjustment !== undefined) {
+                await batchUpdate('adjustPrice', ids, adjustment);
+            }
+        }
+
+        async function batchUpdate(action, productIds, priceAdjustment = 0) {
+            try {
+                Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${API_URL}?action=batchUpdateProducts`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        action: action,
+                        productIds: productIds,
+                        priceAdjustment: priceAdjustment
+                    })
+                });
+                const result = await response.json();
+                Swal.close();
+
+                if (result.success) {
+                    Toast.fire({ icon: 'success', title: result.message });
+                    clearSelection();
+                    loadProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('操作失敗', error.message, 'error');
+            }
+        }
+
+        // ============ 商品排序功能 ============
+
+        async function moveProduct(id, direction) {
+            try {
+                const response = await fetch(`${API_URL}?action=reorderProduct`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        id: id,
+                        direction: direction
+                    })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    loadProducts();
+                } else {
+                    console.error(result.error);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // ============ 開發測試功能已移除 ============
+        // ============ LINE Bot 管理 ============
+        async function loadLineBots() {
+            try {
+                const response = await fetch(`${API_URL}?action=getLineBotSettings&userId=${getAuthUserId()}`);
+                const result = await response.json();
+                if (result.success) {
+                    lineBots = result.bots;
+                    renderLineBots();
+                } else {
+                    Swal.fire('錯誤', result.error, 'error');
+                }
+            } catch (error) {
+                console.error('LINE Bot 載入錯誤', error);
+                Swal.fire('錯誤', '無法載入 LINE Bot 設定', 'error');
+            }
+        }
+
+        function renderLineBots() {
+            const list = document.getElementById('linebots-list');
+            if (lineBots.length === 0) {
+                list.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">尚無帳號</td></tr>';
+                return;
+            }
+
+            let html = '';
+            lineBots.forEach(bot => {
+                const statusClass = bot.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600';
+                const statusText = bot.active ? '使用中' : '備用';
+                const usagePercent = Math.min((bot.usage / bot.limit) * 100, 100).toFixed(1);
+                const usageColor = usagePercent > 90 ? 'text-red-600' : (usagePercent > 70 ? 'text-amber-600' : 'text-green-600');
+
+                html += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td class="p-3 font-medium">${bot.name}</td>
+                        <td class="p-3 text-gray-500 text-sm font-mono">${bot.adminId}</td>
+                        <td class="p-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-full bg-gray-200 rounded-full h-2.5 max-w-[100px]">
+                                    <div class="bg-amber-600 h-2.5 rounded-full" style="width: ${usagePercent}%"></div>
+                                </div>
+                                <span class="text-sm ${usageColor} font-medium">${bot.usage || 0} / ${bot.limit}</span>
+                            </div>
+                        </td>
+                        <td class="p-3 text-right">
+                            <div class="flex justify-end gap-2">
+                                ${!bot.active ?
+                        `<button onclick="switchLineBot('${bot.id}')" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">切換使用</button>`
+                        : ''}
+                                <button onclick="openLineBotModal('${bot.id}')" class="text-blue-500 hover:text-blue-700">編輯</button>
+                                ${!bot.active && lineBots.length > 1 ?
+                        `<button onclick="deleteLineBot('${bot.id}')" class="text-red-500 hover:text-red-700">刪除</button>`
+                        : ''}
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+            list.innerHTML = html;
+        }
+
+        function openLineBotModal(botId = null) {
+            document.getElementById('linebot-modal').classList.remove('hidden');
+            const form = document.getElementById('linebot-form');
+            form.reset();
+
+            if (botId) {
+                const bot = lineBots.find(b => b.id === botId);
+                document.getElementById('linebot-modal-title').textContent = '編輯 LINE 帳號';
+                document.getElementById('bot-id').value = bot.id;
+                document.getElementById('bot-name').value = bot.name;
+                document.getElementById('bot-token').value = bot.token;
+                document.getElementById('bot-admin-id').value = bot.adminId;
+                document.getElementById('bot-usage').value = bot.usage || 0;
+                document.getElementById('bot-limit').value = bot.limit || 200;
+            } else {
+                document.getElementById('linebot-modal-title').textContent = '新增 LINE 帳號';
+                document.getElementById('bot-id').value = '';
+                // 預設值
+                document.getElementById('bot-limit').value = 200;
+                document.getElementById('bot-usage').value = 0;
+            }
+        }
+
+        function closeLineBotModal() {
+            document.getElementById('linebot-modal').classList.add('hidden');
+        }
+
+        async function saveLineBot(e) {
+            e.preventDefault();
+
+            const botId = document.getElementById('bot-id').value;
+            const newBot = {
+                id: botId || crypto.randomUUID(), // 需要現代瀏覽器支援，或自定義
+                name: document.getElementById('bot-name').value,
+                token: document.getElementById('bot-token').value,
+                adminId: document.getElementById('bot-admin-id').value,
+                usage: parseInt(document.getElementById('bot-usage').value),
+                limit: parseInt(document.getElementById('bot-limit').value),
+                active: botId ? lineBots.find(b => b.id === botId).active : (lineBots.length === 0)
+            };
+
+            let newBots = [...lineBots];
+            if (botId) {
+                const index = newBots.findIndex(b => b.id === botId);
+                newBots[index] = newBot;
+            } else {
+                newBots.push(newBot);
+            }
+
+            try {
+                // 顯示載入
+                Swal.fire({ title: '儲存中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${API_URL}?action=saveLineBotSettings`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        bots: newBots
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.close();
+                    closeLineBotModal();
+                    loadLineBots(); // 重新載入
+                    Swal.fire('成功', '帳號設定已儲存', 'success');
+                } else {
+                    Swal.fire('錯誤', result.error, 'error');
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '儲存失敗：' + error.message, 'error');
+            }
+        }
+
+        async function switchLineBot(botId) {
+            try {
+                Swal.fire({ title: '切換中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${API_URL}?action=switchLineBot`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        userId: getAuthUserId(),
+                        botId: botId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    await loadLineBots();
+                    Swal.fire('成功', '已切換當前使用的 LINE 帳號', 'success');
+                } else {
+                    Swal.fire('錯誤', result.error, 'error');
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '切換失敗：' + error.message, 'error');
+            }
+        }
+
+        async function deleteLineBot(botId) {
+            Swal.fire({
+                title: '確定刪除？',
+                text: "此操作無法復原！",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: '是的，刪除它'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const newBots = lineBots.filter(b => b.id !== botId);
+
+                    try {
+                        Swal.fire({ title: '刪除中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                        const response = await fetch(`${API_URL}?action=saveLineBotSettings`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                userId: getAuthUserId(),
+                                bots: newBots
+                            })
+                        });
+
+                        const res = await response.json();
+
+                        if (res.success) {
+                            Swal.fire('已刪除', '該帳號已刪除', 'success');
+                            loadLineBots();
+                        } else {
+                            Swal.fire('錯誤', res.error, 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('錯誤', '刪除失敗：' + error.message, 'error');
+                    }
+                }
+            });
+        }
+
+
+        // ============ 用戶管理系統 ============
+        let users = [];
+
+        async function loadUsers() {
+            try {
+                const search = document.getElementById('user-search') ? document.getElementById('user-search').value : '';
+                Swal.fire({ title: '載入中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const response = await fetch(`${API_URL}?action=getUsers&userId=${getAuthUserId()}&search=${encodeURIComponent(search)}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    users = result.users;
+                    renderUsers();
+                    Swal.close();
+                } else {
+                    Swal.fire('錯誤', result.error, 'error');
+                }
+            } catch (error) {
+                console.error('用戶載入錯誤', error);
+                Swal.fire('錯誤', '無法載入用戶列表', 'error');
+            }
+        }
+
+        function renderUsers() {
+            const list = document.getElementById('users-list');
+            if (users.length === 0) {
+                list.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">無符合條件的用戶</td></tr>';
+                return;
+            }
+
+            const currentUserId = getAuthUserId();
+            // 這裡我們無法在前端直接知道目前用戶是否為 Super Admin，
+            // 但可以透過 ID (如果有硬編碼) 或者後續 API 呼叫的結果來判斷。
+            // 不過我們可以在 API 回傳的 user 物件中增加一個 role 欄位給前端判斷。
+            // 假設 currentUser 已經更新包含 role 資訊 (需要在登入時處理)
+            // 暫時先用目前的權限判斷，所有能進到這頁面的都是 Admin (或 Super Admin)
+            // 但只有 Super Admin 能看到「指派管理員」按鈕。
+
+            // 由於前端沒有嚴格的 Super Admin 標記，我們這裡先檢查是否為該特定 ID
+            // 請注意：這只是 UI 層面的顯示控制，真正的權限檢查在後端
+            // 從 Code.gs 得知 Super Admin ID 是 LINE_ADMIN_USER_ID
+            // 但前端沒有這個變數。我們可以從後端取得，或者假設只有特定 ID 能看。
+            // 為了簡化，我們先顯示按鈕，點擊後後端會驗證。
+
+            let html = '';
+            users.forEach(u => {
+                const isSuperAdmin = (u.role === 'SUPER_ADMIN'); // 雖然 User 表可能沒有這個值，但可以用 ID 判斷
+                const isAdmin = (u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
+                const isBlacklisted = (u.status === 'BLACKLISTED');
+
+                const roleBadge = isAdmin
+                    ? `<span class="px-2 py-1 rounded text-xs font-bold bg-purple-100 text-purple-800">${u.role}</span>`
+                    : `<span class="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">USER</span>`;
+
+                const statusBadge = isBlacklisted
+                    ? `<span class="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">黑名單</span>`
+                    : `<span class="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">正常</span>`;
+
+                const lastLoginDate = u.lastLogin ? new Date(u.lastLogin).toLocaleString('zh-TW') : '無紀錄';
+
+                // 操作按鈕邏輯
+                let actions = '';
+
+                // 黑名單按鈕
+                if (isBlacklisted) {
+                    actions += `<button onclick="toggleUserBlacklist('${u.userId}', false)" class="text-green-600 hover:text-green-800 text-sm mr-2">解除封鎖</button>`;
+                } else {
+                    actions += `<button onclick="toggleUserBlacklist('${u.userId}', true)" class="text-red-500 hover:text-red-700 text-sm mr-2">封鎖</button>`;
+                }
+
+                // 權限指派按鈕 (只有對非 Super Admin 的對象顯示)
+                if (!isSuperAdmin) { // 假設不能更改 Super Admin
+                    if (isAdmin) {
+                        actions += `<button onclick="toggleUserRole('${u.userId}', 'USER')" class="text-xs border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50">移除管理員</button>`;
+                    } else {
+                        actions += `<button onclick="toggleUserRole('${u.userId}', 'ADMIN')" class="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700">設為管理員</button>`;
+                    }
+                }
+
+                html += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">
+                            <img src="${u.pictureUrl || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full border">
+                        </td>
+                        <td class="p-3">
+                            <div class="font-medium text-gray-800">${u.displayName}</div>
+                            <div class="text-xs text-gray-400 font-mono">${u.userId}</div>
+                        </td>
+                        <td class="p-3">${roleBadge}</td>
+                        <td class="p-3">${statusBadge}</td>
+                        <td class="p-3 text-sm text-gray-500">${lastLoginDate}</td>
+                        <td class="p-3 text-right">
+                            ${actions}
+                        </td>
+                    </tr>`;
+            });
+            list.innerHTML = html;
+        }
+
+        async function toggleUserRole(targetUserId, newRole) {
+            Swal.fire({
+                title: `確定要將此用戶設為 ${newRole} 嗎？`,
+                text: newRole === 'ADMIN' ? '該用戶將可以登入後台管理系統。' : '該用戶將失去後台登入權限。',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '確定',
+                cancelButtonText: '取消'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                        const response = await fetch(`${API_URL}?action=updateUserRole`, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                userId: getAuthUserId(),
+                                targetUserId: targetUserId,
+                                newRole: newRole
+                            })
+                        });
+
+                        const res = await response.json();
+
+                        if (res.success) {
+                            Swal.fire('成功', res.message, 'success');
+                            loadUsers();
+                        } else {
+                            Swal.fire('權限不足或錯誤', res.error, 'error');
+                        }
+                    } catch (error) {
+                        Swal.fire('錯誤', '操作失敗：' + error.message, 'error');
+                    }
+                }
+            });
+        }
+
+        async function toggleUserBlacklist(targetUserId, isBlocked) {
+            if (isBlocked) {
+                // 呼叫現有的 blockUser (可能需要微調以支援 ID 傳入，或直接用新 API)
+                // 這裡我們直接呼叫 addToBlacklist，因為我們已經有了對方的 ID
+                // 但現有的 blockUser 是針對訂單操作的。
+                // 我們可以實作一個新的通用封鎖函數，或者直接呼叫後端 API。
+                // 為了簡單，我們直接呼叫後端。
+                Swal.fire({
+                    title: '封鎖用戶',
+                    text: '請輸入封鎖原因：',
+                    input: 'text',
+                    showCancelButton: true,
+                    confirmButtonText: '封鎖',
+                    cancelButtonText: '取消'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        const reason = result.value;
+                        try {
+                            const user = users.find(u => u.userId === targetUserId);
+                            Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                            const response = await fetch(`${API_URL}?action=addToBlacklist`, {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    userId: getAuthUserId(),
+                                    lineUserId: targetUserId,
+                                    displayName: user ? user.displayName : '',
+                                    reason: reason
+                                })
+                            });
+
+                            const res = await response.json();
+                            if (res.success) {
+                                Swal.fire('成功', '已封鎖該用戶', 'success');
+                                loadUsers();
+                            } else {
+                                Swal.fire('錯誤', res.error, 'error');
+                            }
+                        } catch (e) {
+                            Swal.fire('錯誤', e.message, 'error');
+                        }
+                    }
+                });
+            } else {
+                // 解除封鎖
+                Swal.fire({
+                    title: '確定解除封鎖？',
+                    text: "該用戶將可以再次下單。",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: '解除封鎖'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            Swal.fire({ title: '處理中...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                            const response = await fetch(`${API_URL}?action=removeFromBlacklist`, {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    userId: getAuthUserId(),
+                                    lineUserId: targetUserId
+                                })
+                            });
+
+                            const res = await response.json();
+                            if (res.success) {
+                                Swal.fire('成功', '已解除封鎖', 'success');
+                                loadUsers();
+                            } else {
+                                Swal.fire('錯誤', res.error, 'error');
+                            }
+                        } catch (e) {
+                            Swal.fire('錯誤', e.message, 'error');
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>

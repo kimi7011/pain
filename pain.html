@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>揉PAin 訂購表單</title>
+    <link rel="icon" type="image/png" href="pain.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #8B5A2B;
+            --primary-dark: #6B4423;
+            --secondary: #F5E6D3;
+            --accent: #D4A574;
+        }
+
+        body {
+            background: linear-gradient(135deg, #F5E6D3 0%, #E8D4C4 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(139, 90, 43, 0.15);
+        }
+
+        /* 底部固定欄 */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 24px;
+            box-shadow: 0 -4px 20px rgba(139, 90, 43, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            border-top: 1px solid rgba(139, 90, 43, 0.2);
+        }
+
+        .total-price-display {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* 預留底部空間給固定欄 */
+        .content-spacer {
+            height: 100px;
+        }
+
+        table {
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 40%;
+        }
+
+        th:nth-child(2),
+        td:nth-child(2),
+        th:nth-child(3),
+        td:nth-child(3),
+        th:nth-child(4),
+        td:nth-child(4) {
+            width: 20%;
+        }
+
+        .category-header {
+            background: linear-gradient(135deg, #8B5A2B 0%, #6B4423 100%);
+            color: white;
+        }
+
+        .category-header th {
+            border: none !important;
+        }
+
+        .product-row:hover {
+            background: rgba(212, 165, 116, 0.15);
+        }
+
+        .quantity-input {
+            border: 2px solid #D4A574;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .quantity-input:focus {
+            border-color: #8B5A2B;
+            box-shadow: 0 0 0 3px rgba(139, 90, 43, 0.2);
+            outline: none;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #8B5A2B 0%, #6B4423 100%);
+            color: white;
+            padding: 12px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(139, 90, 43, 0.4);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 90, 43, 0.5);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #F5E6D3;
+            border-top: 3px solid #8B5A2B;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .input-field {
+            border: 2px solid #D4A574;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .input-field:focus {
+            border-color: #8B5A2B;
+            box-shadow: 0 0 0 3px rgba(139, 90, 43, 0.2);
+            outline: none;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-6">
+    <!-- 公告橫幅 -->
+    <div id="announcement-banner"
+        class="hidden max-w-4xl mx-auto mb-4 p-4 bg-amber-100 border border-amber-300 rounded-xl text-amber-800 relative">
+        <button onclick="closeAnnouncement()"
+            class="absolute top-2 right-2 text-amber-600 hover:text-amber-800 text-xl">&times;</button>
+        <p id="announcement-text" class="pr-6"></p>
+    </div>
+
+    <!-- 休息中覆蓋層 -->
+    <div id="closed-overlay" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md text-center shadow-2xl">
+            <div class="text-6xl mb-4">🌙</div>
+            <h2 class="text-2xl font-bold text-amber-800 mb-4">目前休息中</h2>
+            <p id="business-hours-info" class="text-gray-600 mb-4"></p>
+            <p class="text-sm text-gray-500">請於開放時間再來訂購，感謝您！</p>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto glass-card p-6">
+        <div class="flex items-center gap-3 mb-6">
+            <span class="text-4xl">🍞</span>
+            <h2 class="text-2xl font-bold text-amber-800">揉PAin 訂購表單</h2>
+        </div>
+
+        <!-- LINE 登入區塊 -->
+        <div id="login-section" class="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+            <div id="login-prompt" class="text-center">
+                <p class="text-gray-600 mb-3">請先使用 LINE 帳號登入才能訂購</p>
+                <button onclick="loginWithLine()"
+                    class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                    </svg>
+                    使用 LINE 登入
+                </button>
+            </div>
+            <div id="user-info" class="hidden flex items-center gap-3">
+                <img id="user-avatar" src="" alt="頭像" class="w-12 h-12 rounded-full border-2 border-green-300">
+                <div class="flex-1">
+                    <p class="text-sm text-gray-500">已登入</p>
+                    <p id="user-display-name" class="font-semibold text-gray-700"></p>
+                </div>
+                <button onclick="showMyOrders()" class="text-sm text-amber-600 hover:text-amber-800 font-medium">📋
+                    我的訂單</button>
+                <button onclick="logout()" class="text-sm text-gray-500 hover:text-red-500">登出</button>
+            </div>
+        </div>
+
+        <!-- LINE 顯示名稱（隱藏，用於表單提交） -->
+        <input type="hidden" id="line-name">
+
+        <div class="mb-6">
+            <label class="block text-amber-800 font-medium mb-2">聯絡電話：</label>
+            <input type="tel" id="contact-phone" class="w-full input-field p-3" placeholder="請輸入您的聯絡電話">
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-amber-200">
+            <table class="min-w-full">
+                <tbody id="products-table">
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-amber-700">
+                            <div class="loading-spinner mx-auto mb-3"></div>
+                            <p>載入商品中...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="content-spacer"></div>
+    </div>
+
+    <!-- 底部固定欄 -->
+    <div class="bottom-bar">
+        <div class="w-full max-w-4xl mx-auto flex items-center justify-between md:justify-end md:gap-6">
+            <div class="total-price-display" id="total-price">總金額: $0</div>
+            <button onclick="submitOrder()" class="btn-submit">
+                🛒 送出訂單
+            </button>
+        </div>
+    </div>
+
+    <!-- 我的訂單彈窗 -->
+    <div id="my-orders-modal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-amber-800">📋 我的訂單記錄</h3>
+                <button onclick="closeMyOrdersModal()"
+                    class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="my-orders-list" class="flex-1 overflow-y-auto p-4">
+                <!-- 訂單將由 JS 載入 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        //              系統設定區 (請修改此處)
+        // ==========================================
+
+        // Supabase API 網址 (必填)
+        // 1️⃣ 修改為你的 Supabase 專案 URL
+        const API_URL = 'https://vwkemmyigpykuxyunbec.supabase.co/functions/v1/api';
+
+        // LINE Login 設定
+        const LINE_LOGIN_REDIRECT_URI = 'https://kimi7011.github.io/pain/pain.html';
+
+        // ==========================================
+        //              以下程式碼請勿修改
+        // ==========================================
+
+        let products = [];
+        let categories = [];
+        let storeSettings = {};
+        let currentUser = null; // 儲存登入的用戶資訊
+
+        // ============ 初始化 ============
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 檢查 URL 是否有 LINE Login 回傳的 code
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+
+            if (code) {
+                // 從 LINE Login 返回
+                await handleLineCallback(code, state);
+            } else {
+                // 檢查是否已登入（從 localStorage）
+                checkLoginStatus();
+            }
+
+            // 使用合併 API 一次載入所有資料（效能優化）
+            await loadInitData();
+            updateFormState();
+        });
+
+        // ============ 合併載入（效能優化）============
+        async function loadInitData() {
+            try {
+                const response = await fetch(`${API_URL}?action=getInitData&_=${new Date().getTime()}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    products = result.products.filter(p => p.enabled);
+                    categories = result.categories;
+                    storeSettings = result.settings;
+                    applyStoreSettings();
+                    renderProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('products-table').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-red-600">
+                            載入失敗：${error.message}<br>
+                            <button onclick="loadInitData()" class="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition">重試</button>
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        // ============ LINE Login ============
+        async function loginWithLine() {
+            try {
+                // 從後端取得授權 URL（安全性：避免前端暴露 Channel ID）
+                const response = await fetch(`${API_URL}?action=getLineLoginUrl&redirectUri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.setItem('pain_line_login_state', result.state);
+                    window.location.href = result.authUrl;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                Swal.fire('錯誤', '無法啟動登入流程：' + error.message, 'error');
+            }
+        }
+
+        async function handleLineCallback(code, state) {
+            const savedState = localStorage.getItem('pain_line_login_state');
+            localStorage.removeItem('pain_line_login_state');
+
+            if (!savedState || state !== savedState) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '驗證失敗',
+                    text: '請重新登入',
+                    confirmButtonText: '確定'
+                });
+                window.history.replaceState({}, document.title, 'pain.html');
+                return;
+            }
+
+            Swal.fire({
+                title: '登入驗證中...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const response = await fetch(
+                    `${API_URL}?action=customerLineLogin&code=${encodeURIComponent(code)}&redirectUri=${encodeURIComponent(LINE_LOGIN_REDIRECT_URI)}`
+                );
+                const result = await response.json();
+
+                window.history.replaceState({}, document.title, 'pain.html');
+
+                if (result.success) {
+                    currentUser = result.user;
+                    localStorage.setItem('pain_user', JSON.stringify(currentUser));
+                    showUserInfo();
+                    Swal.close();
+                } else if (result.isBlacklisted) {
+                    // 顯示封鎖訊息
+                    Swal.fire({
+                        icon: 'error',
+                        title: '帳號已被封鎖',
+                        html: `
+                            <p class="mb-2">您的帳號已被停權，無法使用訂購功能。</p>
+                            <p class="text-sm text-gray-500">封鎖原因：<strong>${result.reason}</strong></p>
+                            ${result.blockedAt ? `<p class="text-xs text-gray-400 mt-2">封鎖時間：${result.blockedAt}</p>` : ''}
+                        `,
+                        confirmButtonText: '了解'
+                    });
+                } else {
+                    throw new Error(result.error || '登入失敗');
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '登入失敗',
+                    text: error.message
+                });
+            }
+        }
+
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('pain_user');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    showUserInfo();
+                } catch (e) {
+                    localStorage.removeItem('pain_user');
+                }
+            }
+        }
+
+        function showUserInfo() {
+            document.getElementById('login-prompt').classList.add('hidden');
+            document.getElementById('user-info').classList.remove('hidden');
+            document.getElementById('user-display-name').textContent = currentUser.displayName;
+            document.getElementById('user-avatar').src = currentUser.pictureUrl || 'https://via.placeholder.com/48';
+            document.getElementById('line-name').value = currentUser.displayName;
+
+            // 自動帶入電話
+            if (currentUser.phone) {
+                document.getElementById('contact-phone').value = currentUser.phone;
+            }
+
+            updateFormState();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('pain_user');
+            document.getElementById('login-prompt').classList.remove('hidden');
+            document.getElementById('user-info').classList.add('hidden');
+            document.getElementById('line-name').value = '';
+            updateFormState();
+        }
+
+        function updateFormState() {
+            const submitBtn = document.querySelector('.btn-submit');
+            if (!currentUser) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitBtn.title = '請先登入 LINE 帳號';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.title = '';
+            }
+        }
+
+        // ============ 我的訂單功能 ============
+        let myOrders = [];
+
+        function showMyOrders() {
+            if (!currentUser) {
+                Swal.fire('請先登入', '登入後即可查詢訂單記錄', 'info');
+                return;
+            }
+            document.getElementById('my-orders-modal').classList.remove('hidden');
+            loadMyOrders();
+        }
+
+        function closeMyOrdersModal() {
+            document.getElementById('my-orders-modal').classList.add('hidden');
+        }
+
+        async function loadMyOrders() {
+            const listContainer = document.getElementById('my-orders-list');
+            listContainer.innerHTML = '<p class="text-center text-gray-500 py-8">載入中...</p>';
+
+            try {
+                const response = await fetch(`${API_URL}?action=getMyOrders&lineUserId=${currentUser.userId}&_=${new Date().getTime()}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    myOrders = result.orders;
+                    renderMyOrders();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                listContainer.innerHTML = `<p class="text-center text-red-500 py-8">載入失敗: ${error.message}</p>`;
+            }
+        }
+
+        function renderMyOrders() {
+            const listContainer = document.getElementById('my-orders-list');
+
+            if (!myOrders || myOrders.length === 0) {
+                listContainer.innerHTML = '<p class="text-center text-gray-500 py-8">尚無訂單記錄</p>';
+                return;
+            }
+
+            let html = '';
+            myOrders.forEach(order => {
+                const date = new Date(order.timestamp);
+                const dateStr = date.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+                html += `
+                    <div class="border border-gray-200 rounded-xl p-4 mb-3">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm text-amber-700 font-bold">#${order.orderId}</span>
+                            <span class="text-xs text-gray-500">${dateStr}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 whitespace-pre-line bg-gray-50 p-3 rounded mb-2">${escapeHtml(order.items)}</div>
+                        <div class="text-right font-bold text-amber-800">$${order.total}</div>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = html;
+        }
+
+        // ============ 載入店家設定 ============
+        async function loadStoreSettings() {
+            try {
+                const response = await fetch(`${API_URL}?action=getSettings&_=${new Date().getTime()}`);
+                const result = await response.json();
+                if (result.success) {
+                    storeSettings = result.settings;
+                    applyStoreSettings();
+                }
+            } catch (error) {
+                console.error('載入設定失敗', error);
+            }
+        }
+
+        function applyStoreSettings() {
+            // 顯示公告
+            if (String(storeSettings.announcement_enabled) === 'true' && storeSettings.announcement) {
+                document.getElementById('announcement-text').textContent = storeSettings.announcement;
+                document.getElementById('announcement-banner').classList.remove('hidden');
+            }
+
+            // 檢查營業狀態
+            if (!storeSettings.currentlyOpen) {
+                const startTime = (storeSettings.business_period_start || '').replace('T', ' ');
+                const endTime = (storeSettings.business_period_end || '').replace('T', ' ');
+
+                // 格式化顯示：只顯示月/日 時:分
+                const formatTime = (ts) => {
+                    if (!ts) return '未設定';
+                    return ts.substring(5, 16).replace('-', '/');
+                };
+
+                document.getElementById('business-hours-info').textContent =
+                    `開放訂購期間：${formatTime(startTime)} ~ ${formatTime(endTime)}`;
+                document.getElementById('closed-overlay').classList.remove('hidden');
+            }
+        }
+
+        function closeAnnouncement() {
+            document.getElementById('announcement-banner').classList.add('hidden');
+        }
+
+        // ============ 載入商品 ============
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_URL}?action=getProducts&_=${new Date().getTime()}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    products = result.products.filter(p => p.enabled);
+                    await loadCategories();
+                    renderProducts();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('products-table').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-red-600">
+                            載入失敗：${error.message}<br>
+                            <button onclick="loadProducts()" class="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition">重試</button>
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_URL}?action=getCategories`);
+                const result = await response.json();
+                if (result.success) {
+                    categories = result.categories;
+                }
+            } catch (error) {
+                console.error('分類載入失敗', error);
+            }
+        }
+
+        // ============ 安全性輔助函數 ============
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#x27;');
+        }
+
+        // ============ 渲染商品 ============
+        function renderProducts() {
+            const tbody = document.getElementById('products-table');
+
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-amber-600">目前沒有商品</td></tr>';
+                return;
+            }
+
+            // 依分類分組
+            const grouped = {};
+            products.forEach(p => {
+                if (!grouped[p.category]) grouped[p.category] = [];
+                grouped[p.category].push(p);
+            });
+
+            // 按照 categories 的順序排列分類
+            const categoryOrder = categories.map(c => c.name);
+            const sortedCategories = Object.keys(grouped).sort((a, b) => {
+                const indexA = categoryOrder.indexOf(a);
+                const indexB = categoryOrder.indexOf(b);
+                if (indexA === -1) return 1;
+                if (indexB === -1) return -1;
+                return indexA - indexB;
+            });
+
+            let html = '';
+            sortedCategories.forEach(category => {
+                const items = grouped[category];
+                // 分類標題（使用 escapeHtml 防止 XSS）
+                const safeCategory = escapeHtml(category);
+                html += `
+                    <tr class="category-header">
+                        <th class="p-2 text-left font-semibold">${safeCategory}</th>
+                        <th class="p-2">數量</th>
+                        <th class="p-2">價格</th>
+                        <th class="p-2">金額</th>
+                    </tr>`;
+
+                // 商品列
+                items.forEach(p => {
+                    const safeName = escapeHtml(p.name);
+                    const safeNote = escapeHtml(p.note);
+                    const displayName = safeNote ? `${safeName} ${safeNote}` : safeName;
+                    html += `
+                        <tr class="product-row text-center border-b border-amber-100">
+                            <td class="p-2 text-left text-gray-700">${displayName}</td>
+                            <td class="p-2">
+                                <div class="flex items-center justify-center gap-1">
+                                    <button class="w-10 h-10 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200 flex items-center justify-center font-bold text-xl active:bg-amber-300 transition-colors"
+                                        onclick="updateQuantity(this, -1)">-</button>
+                                    <input 
+                                        type="tel" 
+                                        inputmode="numeric"
+                                        class="quantity w-12 text-center p-1 bg-transparent border-0 focus:ring-0 font-medium text-lg text-amber-900" 
+                                        data-price="${p.price}"
+                                        data-name="${safeName}"
+                                        value="0" 
+                                        min="0" 
+                                        onfocus="this.select()"
+                                        onblur="setDefaultValue(this)"
+                                        oninput="validateInput(this); calculateAmount()">
+                                    <button class="w-10 h-10 rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200 flex items-center justify-center font-bold text-xl active:bg-amber-300 transition-colors"
+                                        onclick="updateQuantity(this, 1)">+</button>
+                                </div>
+                            </td>
+                            <td class="p-2 text-amber-700 font-medium">$${p.price}</td>
+                            <td class="p-2 text-amber-800 font-semibold amount">$0</td>
+                        </tr>`;
+                });
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // ============ 計算金額 ============
+        function calculateAmount() {
+            let rows = document.querySelectorAll("#products-table tr");
+            let total = 0;
+            let orders = [];
+
+            rows.forEach(row => {
+                let quantityInput = row.querySelector(".quantity");
+                if (quantityInput) {
+                    let quantity = parseInt(quantityInput.value, 10) || 0;
+                    let price = parseInt(quantityInput.getAttribute("data-price"), 10);
+                    let name = quantityInput.getAttribute("data-name");
+                    let amount = quantity * price;
+
+                    row.querySelector(".amount").innerText = `$${amount}`;
+                    total += amount;
+
+                    if (quantity > 0) {
+                        orders.push(`${name} x ${quantity} (${amount}元)`);
+                    }
+                }
+            });
+
+            document.getElementById("total-price").innerText = `總金額: $${total}`;
+            return { orders, total };
+        }
+
+        // ============ 提交訂單 ============
+        async function submitOrder() {
+            // 檢查是否已登入
+            if (!currentUser) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '請先登入',
+                    text: '請使用 LINE 帳號登入後再送出訂單',
+                    confirmButtonText: '確定'
+                });
+                return;
+            }
+
+            let orderData = calculateAmount();
+            let lineName = document.getElementById("line-name").value.trim();
+            let contactPhone = document.getElementById("contact-phone").value.trim();
+
+            if (!contactPhone) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '錯誤',
+                    text: '請填寫聯絡電話！'
+                });
+                return;
+            }
+
+            if (orderData.orders.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '錯誤',
+                    text: '請至少選擇一項商品！'
+                });
+                return;
+            }
+
+            let orderSummary = `LINE顯示名稱: ${lineName}
+聯絡電話: ${contactPhone}
+
+訂單內容:
+${orderData.orders.join("\n")}
+
+總金額: $${orderData.total}`.replace(/\n/g, "<br>");
+
+            const result = await Swal.fire({
+                title: '確認訂單',
+                html: orderSummary,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '確認送出',
+                cancelButtonText: '取消'
+            });
+
+            if (!result.isConfirmed) return;
+
+            // 顯示載入中
+            Swal.fire({
+                title: '送出中...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const response = await fetch(`${API_URL}?action=submitOrder`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        lineName: lineName,
+                        contactPhone: contactPhone,
+                        orders: orderData.orders.join("\n"),
+                        total: orderData.total,
+                        lineUserId: currentUser?.userId || ''  // 新增：傳送用戶 ID
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '訂單已送出！',
+                        text: `訂單編號：${data.orderId}`,
+                        confirmButtonText: '確定'
+                    }).then(() => {
+                        // 重置表單
+                        document.querySelectorAll('.quantity').forEach(input => input.value = '0');
+                        document.querySelectorAll('.amount').forEach(td => td.innerText = '$0');
+                        document.getElementById('total-price').innerText = '總金額: $0';
+                    });
+                } else {
+                    throw new Error(data.error || '未知錯誤');
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '送出失敗',
+                    text: error.message === 'Failed to fetch' ? '網路連線失敗，請檢查您的網路狀態' : error.message
+                });
+            }
+        }
+
+        // ============ 輔助函數 ============
+        function updateQuantity(btn, change) {
+            const input = btn.parentElement.querySelector('.quantity');
+            let currentValue = parseInt(input.value, 10) || 0;
+            let newValue = currentValue + change;
+
+            if (newValue < 0) newValue = 0;
+
+            input.value = newValue;
+            calculateAmount();
+        }
+
+        function setDefaultValue(input) {
+            if (input.value.trim() === '') {
+                input.value = '0';
+            }
+        }
+
+        function validateInput(input) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+        }
+    </script>
+</body>
+
+</html>
