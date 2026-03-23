@@ -1,7 +1,7 @@
 // 揉PAin 訂購系統 — Supabase Edge Function
 // 取代原 Google Apps Script (Code.gs)
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { createClient } from 'supabase'
+import { serve } from 'http/server'
 
 // ============ 環境變數 ============
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -30,7 +30,7 @@ function jsonResponse(data: unknown, status = 200) {
 }
 
 // ============ 主路由 ============
-serve(async (req) => {
+serve(async (req: Request) => {
   // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -204,11 +204,11 @@ async function addProduct(data: Record<string, unknown>) {
     }
   }
 
-  const insertData: any = {
-    category: data.category,
-    name: data.name,
+  const insertData: Record<string, string | number | boolean> = {
+    category: data.category as string,
+    name: data.name as string,
     price: parseInt(String(data.price)),
-    note: data.note || '',
+    note: (data.note as string) || '',
     enabled: true,
   }
 
@@ -302,7 +302,7 @@ async function calculateOrderTotal(orderText: string): Promise<number | null> {
     if (!productsResult.success) return null
 
     const priceMap: Record<string, number> = {}
-    for (const p of productsResult.products!) {
+    for (const p of (productsResult.products as { name: string, price: number }[])) {
       priceMap[p.name] = parseInt(String(p.price)) || 0
     }
 
