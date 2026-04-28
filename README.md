@@ -12,6 +12,7 @@
 - `supabase/migrations/`：可由 `supabase db push` 套用的版本化 migration。
 - `docs/changelog.md`：長期變更摘要。
 - `docs/deployment.md`：Supabase / GitHub Actions 部署與 secret 設定。
+- `docs/project-binding.md`：固定 GitHub / Supabase 帳號與專案綁定。
 - `docs/repo-hygiene.md`：repo 檔案衛生、secret scan 與清理規則。
 - `DEV_CONTEXT.md`：給下一位人類或 agent 的交接快照。
 
@@ -23,10 +24,13 @@
 4. Deno import 使用 `supabase/functions/import_map.json` 中的別名，不在程式內新增未管理的 bare specifier。
 5. 變更 Supabase 綁定、部署流程或 secret 規則時，同步更新 `README.md`、`DEV_CONTEXT.md` 與 `docs/deployment.md`。
 6. 新增 migration 使用 `YYYYMMDDHHmm_slug.sql`。
+7. 切換專案或換 agent 後，先執行 `npm run binding:activate` 與 `npm run binding:check`。
 
 ## 常用命令
 
 ```bash
+rtk npm run binding:activate
+rtk npm run binding:check
 rtk npm run guardrails
 rtk npm run hygiene
 rtk npm run lint
@@ -44,6 +48,23 @@ rtk npm run supabase:deploy
 - `scripts/check_migration_names.py`
 - `scripts/check_static_bindings.py`
 - `scripts/check_project_docs_sync.py`
+
+## 專案綁定
+
+非敏感固定綁定寫在 `.project-binding.env`。目前固定到：
+
+- GitHub：`kimi7011/pain`
+- Git remote：`https://kimi7011@github.com/kimi7011/pain.git`
+- Supabase：`rou-pain / vwkemmyigpykuxyunbec`
+
+啟用與檢查：
+
+```bash
+rtk npm run binding:activate
+rtk npm run binding:check
+```
+
+細節見 `docs/project-binding.md`。
 
 ## Supabase 本機設定
 
@@ -88,6 +109,7 @@ Keep Alive workflow 需要：
 ## 維運文件
 
 - `docs/deployment.md`：部署、CI secrets、本機 env、smoke test。
+- `docs/project-binding.md`：固定 GitHub / Supabase 綁定。
 - `docs/repo-hygiene.md`：可提交/不可提交檔案與 secret 掃描規則。
 - `docs/key-rotation-runbook.md`：金鑰輪替 SOP。
 - `docs/changelog.md`：較長變更摘要。

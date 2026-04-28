@@ -14,9 +14,12 @@ CHANGELOG_DATE_RE = re.compile(r"^## (\d{4}-\d{2}-\d{2})$", re.MULTILINE)
 
 REQUIRED_SNIPPETS: dict[str, tuple[str, ...]] = {
     "README.md": (
+        "npm run binding:activate",
+        "npm run binding:check",
         "npm run guardrails",
         "npm run smoke:remote",
         "docs/deployment.md",
+        "docs/project-binding.md",
         "docs/repo-hygiene.md",
         "SUPABASE_ACCESS_TOKEN",
         "SUPABASE_DB_PASSWORD",
@@ -26,14 +29,19 @@ REQUIRED_SNIPPETS: dict[str, tuple[str, ...]] = {
         "scripts/check_migration_names.py",
         "scripts/check_static_bindings.py",
         "scripts/check_project_docs_sync.py",
+        "scripts/check_project_binding.py",
+        "docs/project-binding.md",
         "docs/deployment.md",
         "docs/repo-hygiene.md",
     ),
     "docs/changelog.md": (
         "repo hygiene",
         "靜態前端綁定檢查",
+        "repo-local 專案綁定",
     ),
     "docs/deployment.md": (
+        "npm run binding:activate",
+        "npm run binding:check",
         "SUPABASE_ACCESS_TOKEN",
         "SUPABASE_DB_PASSWORD",
         "npm run supabase:db:push",
@@ -44,6 +52,13 @@ REQUIRED_SNIPPETS: dict[str, tuple[str, ...]] = {
         "scripts/repo_hygiene_check.py",
         "supabase/.temp/",
         ".env.supabase.local",
+    ),
+    "docs/project-binding.md": (
+        ".project-binding.env",
+        "kimi7011/pain",
+        "vwkemmyigpykuxyunbec",
+        "npm run binding:activate",
+        "npm run binding:check",
     ),
 }
 

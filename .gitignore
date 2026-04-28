@@ -1,5 +1,6 @@
 .env
 .env.staging
+.env.github.local
 .env.supabase.local
 !.env.*.example
 !.env.*.sample

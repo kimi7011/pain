@@ -2,6 +2,8 @@
   "private": true,
   "scripts": {
     "hygiene": "python3 scripts/repo_hygiene_check.py",
+    "binding:activate": "bash scripts/activate_project_binding.sh",
+    "binding:check": "python3 scripts/check_project_binding.py",
     "guardrails": "python3 scripts/repo_hygiene_check.py && python3 scripts/check_migration_names.py && python3 scripts/check_static_bindings.py && python3 scripts/check_project_docs_sync.py",
     "fmt": "cd supabase/functions && deno fmt .",
     "lint": "cd supabase/functions && deno lint .",

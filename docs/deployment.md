@@ -2,6 +2,13 @@
 
 本專案沿用咖啡訂購專案的原則：正式金鑰只放在 Supabase / GitHub secrets 或未追蹤的 `.env.supabase.local`，部署動作透過 repo wrapper 重跑，不依賴操作者記憶。
 
+固定 GitHub / Supabase 專案綁定見 `docs/project-binding.md`。切換專案或換 agent 後先跑：
+
+```bash
+rtk npm run binding:activate
+rtk npm run binding:check
+```
+
 ## 本機 Supabase Env
 
 1. 複製 `.env.supabase.local.example` 為 `.env.supabase.local`。
@@ -66,5 +73,6 @@ Edge Function runtime secrets 則設定在 Supabase Dashboard / CLI，不放 Git
 ## 變更規則
 
 - 變更 Supabase project ref、Edge Function 名稱、GitHub Pages URL 或 secret 規則時，同步更新 `README.md`、`DEV_CONTEXT.md`、本文件與 `.env.supabase.local.example`。
+- 變更 GitHub repo/account 或 Supabase project/org 時，同步更新 `.project-binding.env`、`docs/project-binding.md`、`README.md` 與 `DEV_CONTEXT.md`。
 - migration 檔名使用 `YYYYMMDDHHmm_slug.sql`。
 - 正式 secret 曾出現在對話、截圖、log 或 shell history 時，依 `docs/key-rotation-runbook.md` 輪替。

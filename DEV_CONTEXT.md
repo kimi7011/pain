@@ -12,7 +12,7 @@
 2. 溝通、文件、註解與 commit message 預設使用繁體中文。
 3. `.env`、`.env.staging`、`.env.supabase.local` 與 `supabase/.temp/` 是本機敏感/暫存資料，不應提交。
 4. Deno 依賴集中在 `supabase/functions/import_map.json`，程式內使用別名如 `supabase`、`http/server`。
-5. 變更 Supabase 綁定、部署流程、CI 或 secrets 規則時，同步更新 `README.md`、本檔與 `docs/deployment.md`。
+5. 變更 GitHub / Supabase 綁定、部署流程、CI 或 secrets 規則時，同步更新 `README.md`、本檔、`docs/deployment.md` 與 `docs/project-binding.md`。
 
 ---
 
@@ -21,10 +21,12 @@
 - 專案：揉 PAin 訂購系統。
 - 主要分支：`main`。
 - Git remote：`https://kimi7011@github.com/kimi7011/pain.git`。
+- 固定 GitHub account / repo：`kimi7011` / `kimi7011/pain`，綁定來源是 `.project-binding.env`。
 - 前台：`pain.html`，靜態 HTML + CDN script/style。
 - 後台：`admin.html`，靜態 HTML + CDN script/style。
 - 後端：Supabase Edge Function `api`，程式位於 `supabase/functions/api/index.ts`。
 - Supabase project ref：`vwkemmyigpykuxyunbec`。
+- Supabase project / org：`rou-pain` / `pvfvqwbcrvvjrkjgqhjk`。
 - CI：`.github/workflows/ci.yml` 執行 guardrails、Deno lint/check；`main/master` 部署時會在 secrets 齊全後執行 `db push` 與 `functions deploy api --no-verify-jwt`。
 
 ---
@@ -38,6 +40,7 @@
 - 第二階段已補上咖啡訂購式 guardrails：`scripts/repo_hygiene_check.py`、`scripts/check_migration_names.py`、`scripts/check_static_bindings.py`、`scripts/check_project_docs_sync.py`，並接進 `npm run guardrails` / `npm run ci-local` / GitHub Actions。
 - Supabase wrapper 已集中透過 `scripts/load_supabase_env.sh` 載入 `.env.supabase.local`，可保留含 shell 特殊字元或尾端空格的 DB password。
 - 新增 `npm run smoke:remote`，對線上 `api` Edge Function 跑 `getProducts` / `getInitData` 最小檢查。
+- 新增 repo-local 專案綁定：`.project-binding.env`、`scripts/load_project_binding.sh`、`scripts/activate_project_binding.sh`、`scripts/check_project_binding.py` 與 `docs/project-binding.md`。切換專案或換 agent 後，先跑 `npm run binding:activate` 再跑 `npm run binding:check`。
 
 ---
 
@@ -48,12 +51,15 @@
 - Edge Function 使用 service role 存取資料庫；正式 secrets 只應存在 Supabase / GitHub secrets 或未追蹤的 `.env.supabase.local`。
 - GitHub Actions 後端部署依賴 `SUPABASE_ACCESS_TOKEN`、`SUPABASE_DB_PASSWORD` 與 `SUPABASE_PROJECT_REF`；缺少必要值時會跳過部署並在 summary 說明。
 - `supabase/functions/api/index.ts` 尚未全面套用 `deno fmt`，避免在本階段產生大型格式化 diff；目前 CI 先維持 lint/check 與 guardrails。
+- 目前 GitHub API 對 `kimi7011/pain` 回報 viewer permission 為 `READ` 時，`binding:check` 會 warning；這代表綁定可讀但仍不能推送 main，需要 GitHub repo/token 權限補到 `WRITE` / `MAINTAIN` / `ADMIN`。
 
 ---
 
 ## 5) 常用命令
 
 ```bash
+rtk npm run binding:activate
+rtk npm run binding:check
 rtk npm run guardrails
 rtk npm run hygiene
 rtk npm run lint
@@ -72,6 +78,7 @@ rtk npm run supabase:deploy
 - `README.md`：專案入口、規則與部署說明。
 - `docs/changelog.md`：較長歷史摘要。
 - `docs/deployment.md`：Supabase / GitHub Actions 部署與 secrets 操作。
+- `docs/project-binding.md`：固定 GitHub / Supabase 專案綁定。
 - `docs/repo-hygiene.md`：repo hygiene 與 secret scan 規則。
 - `docs/key-rotation-runbook.md`：Supabase / GitHub / LINE secrets 輪替 SOP。
 - `.env.supabase.local.example`：本機 Supabase env 範本。
