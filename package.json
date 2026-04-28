@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "scripts": {
+    "hygiene": "python3 scripts/repo_hygiene_check.py",
+    "guardrails": "python3 scripts/repo_hygiene_check.py && python3 scripts/check_migration_names.py && python3 scripts/check_static_bindings.py && python3 scripts/check_project_docs_sync.py",
+    "fmt": "cd supabase/functions && deno fmt .",
+    "lint": "cd supabase/functions && deno lint .",
+    "check": "cd supabase/functions && deno check api/index.ts",
+    "ci-local": "npm run guardrails && npm run lint && npm run check",
+    "health": "npm run ci-local",
+    "smoke:remote": "python3 scripts/smoke_remote_api.py",
+    "supabase:deploy": "bash scripts/supabase_deploy.sh",
+    "supabase:db:push": "bash scripts/supabase_db_push.sh"
+  }
+}

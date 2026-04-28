@@ -1,0 +1,11 @@
+{
+  "tasks": {
+    "lint": "deno lint .",
+    "check": "deno check api/index.ts"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window", "dom"],
+    "strict": true
+  },
+  "importMap": "./import_map.json"
+}
