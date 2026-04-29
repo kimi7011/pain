@@ -17,6 +17,7 @@ REQUIRED_SNIPPETS: dict[str, tuple[str, ...]] = {
         "npm run binding:activate",
         "npm run binding:check",
         "npm run guardrails",
+        "npm run check:admin",
         "npm run smoke:remote",
         "docs/deployment.md",
         "docs/project-binding.md",
@@ -28,6 +29,7 @@ REQUIRED_SNIPPETS: dict[str, tuple[str, ...]] = {
         "scripts/repo_hygiene_check.py",
         "scripts/check_migration_names.py",
         "scripts/check_static_bindings.py",
+        "scripts/check_admin_script_syntax.py",
         "scripts/check_project_docs_sync.py",
         "scripts/check_project_binding.py",
         "docs/project-binding.md",
@@ -37,6 +39,7 @@ REQUIRED_SNIPPETS: dict[str, tuple[str, ...]] = {
     "docs/changelog.md": (
         "repo hygiene",
         "靜態前端綁定檢查",
+        "後台 inline script 語法檢查",
         "repo-local 專案綁定",
     ),
     "docs/deployment.md": (

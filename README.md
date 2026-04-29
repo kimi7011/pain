@@ -16,6 +16,16 @@
 - `docs/repo-hygiene.md`：repo 檔案衛生、secret scan 與清理規則。
 - `DEV_CONTEXT.md`：給下一位人類或 agent 的交接快照。
 
+## 後台營運功能
+
+`admin.html` 已移植咖啡訂購後台中適合本專案的訂單營運工具：
+
+- 訂單狀態：待處理、處理中、已完成、已取消。
+- 訂單篩選：關鍵字、狀態、日期區間、金額上下限。
+- 營運摘要：總訂單數、篩選結果數與篩選金額合計。
+- 批次操作：全選目前篩選、批次更新狀態、批次刪除。
+- CSV 匯出：匯出目前篩選結果或已勾選訂單。
+
 ## 必讀規則
 
 1. 工作區命令使用 `rtk` 前綴；需要原始輸出時用 `rtk proxy <cmd>`。
@@ -32,6 +42,7 @@
 rtk npm run binding:activate
 rtk npm run binding:check
 rtk npm run guardrails
+rtk npm run check:admin
 rtk npm run hygiene
 rtk npm run lint
 rtk npm run check
@@ -47,6 +58,7 @@ rtk npm run supabase:deploy
 - `scripts/repo_hygiene_check.py`
 - `scripts/check_migration_names.py`
 - `scripts/check_static_bindings.py`
+- `scripts/check_admin_script_syntax.py`
 - `scripts/check_project_docs_sync.py`
 
 ## 專案綁定

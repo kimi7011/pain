@@ -2,6 +2,12 @@
 
 本檔保存 `DEV_CONTEXT.md` 不再承載的較長歷史摘要。它不是完整 changelog；精確差異仍以 git history 為準。
 
+## 2026-04-30
+
+- 分析咖啡訂購後台後，移植適合揉 PAin 的訂單營運工具：訂單狀態、快速/批次更新狀態、多條件篩選、篩選摘要、篩選/勾選 CSV 匯出，以及目前篩選全選。
+- 新增 `orders.status` schema 與 migration，Edge Function 補上 `updateOrderStatus`、`batchUpdateOrderStatus`，並讓訂單查詢回傳狀態。
+- 新增後台 inline script 語法檢查：`scripts/check_admin_script_syntax.py`、`npm run check:admin`，並接入 `npm run guardrails`。
+
 ## 2026-04-29
 
 - 參考咖啡訂購專案第二階段成熟度，新增 repo hygiene、migration 命名、靜態前端綁定檢查與文件同步 guardrails，並接入 `npm run guardrails`、`npm run ci-local` 與 GitHub Actions。

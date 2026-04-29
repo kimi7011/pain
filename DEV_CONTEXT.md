@@ -2,7 +2,7 @@
 
 本文件是交接快照，目標是在 3-5 分鐘內讓下一位接手者掌握規則、現況與風險。較長的歷史摘要放在 `docs/changelog.md`；精確差異以 git history 為準。
 
-最後更新：2026-04-29
+最後更新：2026-04-30
 
 ---
 
@@ -37,10 +37,12 @@
 - `supabase/functions/deno.json` 啟用 `strict`，`import_map.json` 管理 Supabase 與 Deno std import。
 - `supabase/migrations/20260428000000_initial_schema.sql` 將現有 `schema.sql` 轉為可由 `supabase db push` 套用的 migration，且 policy 以 `DROP POLICY IF EXISTS` + `CREATE POLICY` 保持可重跑。
 - `Keep Supabase Alive` workflow 已沿用咖啡訂購的非致命語意：缺少 `SUPABASE_URL` 或 `SUPABASE_ANON_KEY` 時 warning 後略過。
-- 第二階段已補上咖啡訂購式 guardrails：`scripts/repo_hygiene_check.py`、`scripts/check_migration_names.py`、`scripts/check_static_bindings.py`、`scripts/check_project_docs_sync.py`，並接進 `npm run guardrails` / `npm run ci-local` / GitHub Actions。
+- 第二階段已補上咖啡訂購式 guardrails：`scripts/repo_hygiene_check.py`、`scripts/check_migration_names.py`、`scripts/check_static_bindings.py`、`scripts/check_admin_script_syntax.py`、`scripts/check_project_docs_sync.py`，並接進 `npm run guardrails` / `npm run ci-local` / GitHub Actions。
 - Supabase wrapper 已集中透過 `scripts/load_supabase_env.sh` 載入 `.env.supabase.local`，可保留含 shell 特殊字元或尾端空格的 DB password。
 - 新增 `npm run smoke:remote`，對線上 `api` Edge Function 跑 `getProducts` / `getInitData` 最小檢查。
 - 新增 repo-local 專案綁定：`.project-binding.env`、`scripts/load_project_binding.sh`、`scripts/activate_project_binding.sh`、`scripts/check_project_binding.py` 與 `docs/project-binding.md`。切換專案或換 agent 後，先跑 `npm run binding:activate` 再跑 `npm run binding:check`。
+- 已移植咖啡訂購後台的訂單營運工具：訂單狀態欄位、狀態快速/批次更新、多條件篩選、篩選摘要、目前篩選全選，以及篩選/勾選 CSV 匯出。
+- 新增 `npm run check:admin`，guardrails 會用 Node 檢查 `admin.html` inline script 語法，降低大型靜態後台改動風險。
 
 ---
 
@@ -51,6 +53,7 @@
 - Edge Function 使用 service role 存取資料庫；正式 secrets 只應存在 Supabase / GitHub secrets 或未追蹤的 `.env.supabase.local`。
 - GitHub Actions 後端部署依賴 `SUPABASE_ACCESS_TOKEN`、`SUPABASE_DB_PASSWORD` 與 `SUPABASE_PROJECT_REF`；缺少必要值時會跳過部署並在 summary 說明。
 - `supabase/functions/api/index.ts` 尚未全面套用 `deno fmt`，避免在本階段產生大型格式化 diff；目前 CI 先維持 lint/check 與 guardrails。
+- `admin.html` 的營運工具仍是 inline script；新增功能後至少執行 `npm run check:admin` 或 `npm run ci-local`，再部署 Supabase schema / Edge Function。
 - 目前 GitHub API 對 `kimi7011/pain` 回報 viewer permission 為 `READ` 時，`binding:check` 會 warning；這代表綁定可讀但仍不能推送 main，需要 GitHub repo/token 權限補到 `WRITE` / `MAINTAIN` / `ADMIN`。
 
 ---
@@ -61,6 +64,7 @@
 rtk npm run binding:activate
 rtk npm run binding:check
 rtk npm run guardrails
+rtk npm run check:admin
 rtk npm run hygiene
 rtk npm run lint
 rtk npm run check

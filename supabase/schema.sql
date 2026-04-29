@@ -28,7 +28,8 @@ CREATE TABLE IF NOT EXISTS orders (
   phone TEXT NOT NULL,
   items TEXT NOT NULL,
   total INT NOT NULL DEFAULT 0,
-  line_user_id TEXT DEFAULT ''
+  line_user_id TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending'
 );
 
 -- 4. 設定表 (Key-Value)
@@ -73,6 +74,7 @@ CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_products_enabled ON products(enabled);
 CREATE INDEX IF NOT EXISTS idx_orders_line_user_id ON orders(line_user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- ============================================

@@ -101,6 +101,8 @@ serve(async (req: Request) => {
         result = await reorderCategory(data); break
       case 'updateOrder':
         result = await updateOrder(data); break
+      case 'updateOrderStatus':
+        result = await updateOrderStatus(data); break
       case 'deleteOrder':
         result = await deleteOrder(data); break
       case 'updateSettings':
@@ -119,6 +121,8 @@ serve(async (req: Request) => {
         result = await switchLineBot(data); break
       case 'updateUserRole':
         result = await updateUserRole(data); break
+      case 'batchUpdateOrderStatus':
+        result = await batchUpdateOrderStatus(data); break
       case 'batchDeleteOrders':
         result = await batchDeleteOrders(data); break
       default:
@@ -447,6 +451,7 @@ async function getOrders(userId: string) {
     items: row.items,
     total: row.total,
     lineUserId: row.line_user_id || '',
+    status: normalizeOrderStatus(row.status),
   }))
 
   return { success: true, orders }
@@ -472,6 +477,7 @@ async function getMyOrders(lineUserId: string) {
     phone: row.phone,
     items: row.items,
     total: row.total,
+    status: normalizeOrderStatus(row.status),
   }))
 
   return { success: true, orders }
@@ -482,18 +488,60 @@ async function updateOrder(data: Record<string, unknown>) {
     return { success: false, error: '權限不足' }
   }
 
+  const updates: Record<string, unknown> = {
+    line_name: data.lineName,
+    phone: data.phone,
+    items: data.items,
+    total: parseInt(String(data.total)),
+  }
+  if (data.status !== undefined) {
+    const status = parseOrderStatus(data.status)
+    if (!status) return { success: false, error: '訂單狀態無效' }
+    updates.status = status
+  }
+
   const { error } = await supabase
     .from('orders')
-    .update({
-      line_name: data.lineName,
-      phone: data.phone,
-      items: data.items,
-      total: parseInt(String(data.total)),
-    })
+    .update(updates)
     .eq('id', data.orderId)
 
   if (error) return { success: false, error: error.message }
   return { success: true, message: '訂單已更新' }
+}
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  pending: '待處理',
+  processing: '處理中',
+  completed: '已完成',
+  cancelled: '已取消',
+}
+
+function normalizeOrderStatus(value: unknown, fallback = 'pending') {
+  return parseOrderStatus(value) || fallback
+}
+
+function parseOrderStatus(value: unknown) {
+  const status = String(value || '').trim()
+  return ORDER_STATUS_LABELS[status] ? status : null
+}
+
+async function updateOrderStatus(data: Record<string, unknown>) {
+  if (!(await verifyAdmin(data.userId as string)).isAdmin) {
+    return { success: false, error: '權限不足' }
+  }
+
+  const orderId = String(data.orderId || '').trim()
+  const status = parseOrderStatus(data.status)
+  if (!orderId) return { success: false, error: '缺少訂單編號' }
+  if (!status) return { success: false, error: '訂單狀態無效' }
+
+  const { error } = await supabase
+    .from('orders')
+    .update({ status })
+    .eq('id', orderId)
+
+  if (error) return { success: false, error: error.message }
+  return { success: true, message: `訂單狀態已更新為${ORDER_STATUS_LABELS[status]}` }
 }
 
 async function deleteOrder(data: Record<string, unknown>) {
@@ -508,6 +556,34 @@ async function deleteOrder(data: Record<string, unknown>) {
 
   if (error) return { success: false, error: error.message }
   return { success: true, message: '訂單已刪除' }
+}
+
+async function batchUpdateOrderStatus(data: Record<string, unknown>) {
+  if (!(await verifyAdmin(data.userId as string)).isAdmin) {
+    return { success: false, error: '權限不足' }
+  }
+
+  const orderIds = Array.isArray(data.orderIds)
+    ? [...new Set(data.orderIds.map((id) => String(id || '').trim()).filter(Boolean))]
+    : []
+  const status = parseOrderStatus(data.status)
+  if (orderIds.length === 0) {
+    return { success: false, error: '未選擇任何訂單' }
+  }
+  if (!status) return { success: false, error: '訂單狀態無效' }
+
+  const { error, count } = await supabase
+    .from('orders')
+    .update({ status })
+    .in('id', orderIds)
+
+  if (error) return { success: false, error: error.message }
+  const updatedCount = count || orderIds.length
+  return {
+    success: true,
+    message: `已將 ${updatedCount} 筆訂單更新為${ORDER_STATUS_LABELS[status]}`,
+    updatedCount,
+  }
 }
 
 async function batchDeleteOrders(data: Record<string, unknown>) {
