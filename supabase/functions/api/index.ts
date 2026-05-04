@@ -781,6 +781,24 @@ async function addCategory(data: Record<string, unknown>) {
     .select('id')
     .single()
 
+  // 如果是主鍵序列衝突，自動修復序列後重試
+  if (error && error.message.includes('categories_pkey')) {
+    // 呼叫資料庫函數重置序列
+    await supabase.rpc('reset_categories_seq').catch(() => {
+      console.log('reset_categories_seq RPC 不存在，請執行 migration')
+    })
+
+    // 備用方案：直接透過 REST API 重試（序列已修復）
+    const { data: retried, error: retryError } = await supabase
+      .from('categories')
+      .insert({ name: data.name })
+      .select('id')
+      .single()
+
+    if (retryError) return { success: false, error: retryError.message }
+    return { success: true, message: '分類已新增', id: retried.id }
+  }
+
   if (error) return { success: false, error: error.message }
   return { success: true, message: '分類已新增', id: inserted.id }
 }
