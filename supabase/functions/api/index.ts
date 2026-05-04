@@ -784,9 +784,10 @@ async function addCategory(data: Record<string, unknown>) {
   // 如果是主鍵序列衝突，自動修復序列後重試
   if (error && error.message.includes('categories_pkey')) {
     // 呼叫資料庫函數重置序列
-    await supabase.rpc('reset_categories_seq').catch(() => {
-      console.log('reset_categories_seq RPC 不存在，請執行 migration')
-    })
+    const { error: rpcError } = await supabase.rpc('reset_categories_seq')
+    if (rpcError) {
+      console.log('reset_categories_seq RPC 失敗: ' + rpcError.message)
+    }
 
     // 備用方案：直接透過 REST API 重試（序列已修復）
     const { data: retried, error: retryError } = await supabase
